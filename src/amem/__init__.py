@@ -24,6 +24,7 @@ approve: `suggest` queues, `keep` commits.
 from importlib.metadata import PackageNotFoundError, version
 
 from amem.candidates import MemoryCandidate
+from amem.check import Finding, report
 from amem.consolidate import (
     BEHAVIOURAL_BUDGET_CHARS,
     PRESSURE_ACT_AT,
@@ -63,6 +64,7 @@ __all__ = [
     "Actions",
     "AmbiguousHandleError",
     "Completer",
+    "Finding",
     "MemoryCandidate",
     "MemoryEntry",
     "MemoryKind",
@@ -83,6 +85,7 @@ __all__ = [
     "pressure",
     "propose",
     "render",
+    "report",
 ]
 
 try:

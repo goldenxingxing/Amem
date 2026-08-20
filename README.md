@@ -658,6 +658,34 @@ store directly and visibly approximate when you have a tool layer. That is the
 better of the two failures: this used to name one particular application's
 tool, which read as authoritative and was wrong everywhere else.
 
+## Checking that it is actually working
+
+Every way this fails is quiet. Extraction that finds nothing looks like a
+conversation with nothing worth keeping — the common and correct answer. A
+search with no match looks like a store with no match. A preamble that was
+never rendered looks like an agent that did not need one. None of them raise,
+deliberately: a memory system must not break the thing it is attached to. The
+cost is that you cannot tell working from absent by watching.
+
+So ask:
+
+```bash
+python -m amem check ~/.myagent/memory
+```
+
+It answers in two halves. **Capability** is about the machine — can the index
+be built, does a probe stored in a scratch directory come back, in both a
+spaced script and an unspaced one. It touches nothing of yours. **Evidence** is
+about your store: which integration points have left a mark. A session summary
+means something calls the end-of-session hook. A queued proposal means
+extraction ran. A topical stamp means the conversation was handed back. An
+entry means somebody approved one.
+
+What it will not do is guess. "Extraction found nothing" and "extraction was
+never called" produce identical stores, so it reports both readings and tells
+you the experiment that separates them — rather than picking one, which is the
+mistake the whole design exists to avoid.
+
 ## Design commitments
 
 Constraints, not preferences. Each is something Amem will give up performance

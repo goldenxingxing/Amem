@@ -24,7 +24,10 @@ import pytest
 import amem
 
 SOURCE = Path(amem.__file__).parent
-MODULES = [m.name for m in pkgutil.iter_modules([str(SOURCE)])]
+#: `__main__` is excluded on purpose: it exists to be a command, so printing
+#: and exiting are its whole job. Everything else in the package is something a
+#: host imports, and none of it may do either.
+MODULES = [m.name for m in pkgutil.iter_modules([str(SOURCE)]) if m.name != "__main__"]
 
 #: Names belonging to the application this was extracted from, or to any other
 #: particular host. A word here in a docstring means the package is explaining
