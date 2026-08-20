@@ -1,0 +1,78 @@
+[project]
+name = "amem"
+version = "0.1.0"
+description = "Cross-session memory for coding agents — two text files and the standard library"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["memory", "agent", "llm", "retrieval", "sqlite", "fts5", "cjk"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Natural Language :: English",
+    "Natural Language :: Chinese (Simplified)",
+]
+
+# Deliberately one dependency. `sqlite3`, `difflib`, `re` and `json` carry the
+# retrieval, the deduplication and the store; pydantic is here for validation
+# at the file boundary and is the only thing a caller has to already have.
+#
+# Anything proposing to add a second should first read benchmarks/README.md:
+# a dense retriever was measured against this one and the difference was
+# smaller than the measurement noise, for 183 MB.
+dependencies = ["pydantic>=2.0"]
+
+[project.urls]
+Homepage = "https://github.com/goldenxingxing/Amem"
+Repository = "https://github.com/goldenxingxing/Amem"
+Issues = "https://github.com/goldenxingxing/Amem/issues"
+Benchmarks = "https://github.com/goldenxingxing/Amem/blob/main/benchmarks/README.md"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6"]
+
+# What the benchmarks need beyond the library, which is only an HTTP client —
+# every LLM call in benchmarks/ is a plain POST to an OpenAI-compatible
+# endpoint, so there is no vendor SDK here either.
+#
+# The systems being compared against are deliberately absent. They pull large,
+# conflicting dependency trees (a tokenizers clash once silently dropped txtai
+# from three consecutive runs), so they are installed separately and reached
+# through BENCH_SYS_PATH. See benchmarks/README.md.
+bench = ["httpx>=0.27", "numpy>=1.24"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# py.typed ships with the wheel (PEP 561). Without it a consumer running a
+# type checker gets "stub file not found" for every import, which is what
+# integrating this into a typed codebase turned up immediately.
+[tool.hatch.build.targets.wheel]
+packages = ["src/amem"]
+artifacts = ["src/amem/py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# G and LOG catch logging calls written for another library. Two survived the
+# extraction from an application that used loguru: brace placeholders with
+# keyword arguments, which stdlib logging raises TypeError on. Both sat in
+# the handler that skips a malformed line — so the one path written to
+# survive a corrupt store was the one that could not.
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "G", "LOG"]
+# RUF001-003 flag fullwidth punctuation as probably-a-typo. Here it is the
+# subject matter: CJK retrieval is what this package does differently, and its
+# tests and comments have to be written in the script they are about.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

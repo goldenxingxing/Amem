@@ -1,0 +1,33 @@
+# Runs on the Python versions pyproject claims to support, so the claim is
+# checked rather than asserted. ubuntu is deliberate: development happens on
+# macOS, and the file locking, the path handling and the SQLite build all
+# differ there.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Report the SQLite build
+        # FTS5 with a trigram tokeniser needs 3.34+. The library falls back to
+        # its scan without one, so this is information rather than a gate — but
+        # a run that quietly took the fallback should be visible in the log.
+        run: python -c "import sqlite3; print('sqlite', sqlite3.sqlite_version)"
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests benchmarks
+      - run: ruff format --check src tests benchmarks
+      - run: pytest -q

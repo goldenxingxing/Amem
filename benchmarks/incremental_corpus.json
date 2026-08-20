@@ -1,0 +1,261 @@
+{
+ "sessions": [
+  {
+   "id": 1,
+   "date": "2026-03-04",
+   "turns": [
+    [
+     "user",
+     "采样率估计现在是 48 小时滑动窗口，用 deque 存 576 个采样点。"
+    ],
+    [
+     "assistant",
+     "记下了：采样率用 48h 滑动窗口，deque 576 点。"
+    ],
+    [
+     "user",
+     "另外上报失败的重试是固定 5 秒间隔重试三次。"
+    ],
+    [
+     "assistant",
+     "好的。"
+    ]
+   ]
+  },
+  {
+   "id": 2,
+   "date": "2026-03-11",
+   "turns": [
+    [
+     "user",
+     "设计文档合并版放在 output/ingest_pipeline_design/ 下，文件名是 采集管线设计文档_合并版.md。"
+    ],
+    [
+     "assistant",
+     "记下路径。"
+    ],
+    [
+     "user",
+     "还有对外文档里不许出现代码里的函数名和文件名，这是硬要求。"
+    ],
+    [
+     "assistant",
+     "明白，这条我会一直遵守。"
+    ]
+   ]
+  },
+  {
+   "id": 3,
+   "date": "2026-04-02",
+   "turns": [
+    [
+     "user",
+     "重试策略换掉了，现在是指数退避，上限 60 秒，不再用固定 5 秒间隔。"
+    ],
+    [
+     "assistant",
+     "更新记录：重试改为指数退避，上限 60 秒。"
+    ]
+   ]
+  },
+  {
+   "id": 4,
+   "date": "2026-04-18",
+   "turns": [
+    [
+     "user",
+     "验证结论必须我自己重跑确认后才汇报。"
+    ],
+    [
+     "assistant",
+     "收到。"
+    ]
+   ]
+  },
+  {
+   "id": 5,
+   "date": "2026-05-06",
+   "turns": [
+    [
+     "user",
+     "采样率估计改成 EWMA 了，alpha 取 1/288，不再维护 48 小时窗口。"
+    ],
+    [
+     "assistant",
+     "更新记录：采样率改为 EWMA，alpha=1/288。"
+    ],
+    [
+     "user",
+     "样本语料放在 output/samples/raw/ingest_trace_samples/ 下。"
+    ],
+    [
+     "assistant",
+     "记下了。"
+    ]
+   ]
+  },
+  {
+   "id": 6,
+   "date": "2026-05-20",
+   "turns": [
+    [
+     "user",
+     "Windows 打包本地端口用 5494，别和调试端口冲突。"
+    ],
+    [
+     "assistant",
+     "记下：Windows 端口 5494。"
+    ]
+   ]
+  },
+  {
+   "id": 7,
+   "date": "2026-06-03",
+   "turns": [
+    [
+     "user",
+     "Windows 那个端口从 5494 改成 8721 了。"
+    ],
+    [
+     "assistant",
+     "更新记录：端口 8721。"
+    ]
+   ]
+  },
+  {
+   "id": 8,
+   "date": "2026-06-17",
+   "turns": [
+    [
+     "user",
+     "日报写在 output/reports/daily/D-YYYY-MM-DD.md。"
+    ],
+    [
+     "assistant",
+     "记下路径。"
+    ]
+   ]
+  },
+  {
+   "id": 9,
+   "date": "2026-07-01",
+   "turns": [
+    [
+     "user",
+     "设计文档挪了，现在在 output/design/v2/ 下面。"
+    ],
+    [
+     "assistant",
+     "更新记录：设计文档在 output/design/v2/。"
+    ]
+   ]
+  },
+  {
+   "id": 10,
+   "date": "2026-07-15",
+   "turns": [
+    [
+     "user",
+     "采样率相关的工作以 ewma_rate_differential 这个分支为准。"
+    ],
+    [
+     "assistant",
+     "记下：以 ewma_rate_differential 为准。"
+    ]
+   ]
+  },
+  {
+   "id": 11,
+   "date": "2026-07-29",
+   "turns": [
+    [
+     "user",
+     "日报路径改了，现在按月份归档，写在 output/reports/daily/26-8月/ 下。"
+    ],
+    [
+     "assistant",
+     "更新记录：日报按月份归档。"
+    ]
+   ]
+  },
+  {
+   "id": 12,
+   "date": "2026-08-12",
+   "turns": [
+    [
+     "user",
+     "采样率的工作分支换了，现在以 perf_backport 为准，ewma_rate_differential 不再更新。"
+    ],
+    [
+     "assistant",
+     "更新记录：以 perf_backport 为准。"
+    ]
+   ]
+  }
+ ],
+ "facts": [
+  {
+   "topic": "采样率估计方式",
+   "stale": "48 小时滑动窗口 deque 576 点",
+   "current": "EWMA，alpha=1/288",
+   "q": "采样率现在是怎么估计的？",
+   "changed_at": 5
+  },
+  {
+   "topic": "重试策略",
+   "stale": "固定 5 秒间隔重试三次",
+   "current": "指数退避，上限 60 秒",
+   "q": "上报失败现在用什么重试策略？",
+   "changed_at": 3
+  },
+  {
+   "topic": "Windows 端口",
+   "stale": "5494",
+   "current": "8721",
+   "q": "Windows 打包用的本地端口是多少？",
+   "changed_at": 7
+  },
+  {
+   "topic": "设计文档路径",
+   "stale": "output/ingest_pipeline_design/",
+   "current": "output/design/v2/",
+   "q": "采集管线设计文档合并版现在放在哪个目录？",
+   "changed_at": 9
+  },
+  {
+   "topic": "日报路径",
+   "stale": "output/reports/daily/D-YYYY-MM-DD.md",
+   "current": "output/reports/daily/26-8月/",
+   "q": "日报现在写在哪个路径？",
+   "changed_at": 11
+  },
+  {
+   "topic": "采样率分支",
+   "stale": "ewma_rate_differential",
+   "current": "perf_backport",
+   "q": "采样率相关工作现在以哪个分支为准？",
+   "changed_at": 12
+  },
+  {
+   "topic": "函数名禁令",
+   "stale": null,
+   "current": "对外文档不得出现代码函数名/文件名",
+   "q": "对外文档在命名上有什么禁令？",
+   "changed_at": null
+  },
+  {
+   "topic": "独立复核",
+   "stale": null,
+   "current": "验证结论必须自己重跑确认",
+   "q": "我对验证流程有什么要求？",
+   "changed_at": null
+  },
+  {
+   "topic": "样本语料",
+   "stale": null,
+   "current": "output/samples/raw/ingest_trace_samples/",
+   "q": "采样样本语料库在哪里？",
+   "changed_at": null
+  }
+ ]
+}
