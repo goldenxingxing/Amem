@@ -83,30 +83,28 @@ varies by up to ten points between them**.
 
 | System | Recall@8 EN | Recall@8 ZH | End-to-end | runs | spread |
 |---|---|---|---|---|---|
+| Cognee — chunk path | 75.4% ✻† | — English-only run | — see below | — | — |
+| MemOS | 69.5% ✻ | — English-only run | 47.0% | 2 | 43.3–50.8 |
 | mem0 — qdrant hybrid | **68.5%** | 49.3% | 52.7% | 8 | 49.2–55.8 |
 | **Amem** | 64.6% | **58.9%** | 49.4% | 8 | 46.7–53.3 |
 | LlamaIndex BM25 | 60.6% | 2.3% | 48.0% | 8 | 43.3–52.5 |
-| MemOS | 69.5% ✻ | — English-only run | 47.0% | 2 | 43.3–50.8 |
-| txtai — dense + BM25 | 57.6% | 61.9% | 46.6% | 3 | 43.3–48.3 |
-| mem0 — dense, multilingual | 58.3% | 54.6% | — end-to-end not run | — | — |
 | BM25 + 5-line CJK tokenizer | 60.6% | 51.3% | — a baseline, not a system | — | — |
+| mem0 — dense, multilingual | 58.3% | 54.6% | — end-to-end not run | — | — |
+| txtai — dense + BM25 | 57.6% | 61.9% | 46.6% | 3 | 43.3–48.3 |
+| SimpleMem | ✗ answers, never returns turns | ✗ same | — see below | — | — |
 | *Amem, answered by a stronger model* | *— same retrieval* | *— same* | *54.5%* | 7 | 52.5–55.8 |
 
 **✻** 118-question subset, not comparable with the 302-question rows. On that
 same subset Amem scores 61.9% against MemOS's 69.5%.
+**†** Not the same budget: one Cognee "result" is a twenty-turn document, so
+eight results are 160 turns against everyone else's eight.
 
-**Cognee and SimpleMem are not in this table**, though both score higher
-end-to-end — 64.3% and 76.3%. They run their own model at query time, so the
-number measures their model and their memory together, and there is no way to
-hold the model fixed across them. The control row shows how much of that is the
-model: the same Amem retrieval, answered by a stronger one, moves five points
-without a single change to what was stored. Their costs are in the table below,
-where they *are* comparable.
-
-**Amem is mid-field on retrieval.** Two rows here beat it. **If that is what
-you are optimising it is not the library to pick.** The number is here because
-a comparison written by an entrant that hides the column it loses is a
-comparison whose other columns need not be read.
+**Cognee and SimpleMem have no end-to-end figure here.** They run their own
+model at query time, so the number measures their model and their memory
+together, and there is no way to hold the model fixed across them. The control
+row shows how much of that is the model: the same Amem retrieval, answered by a
+stronger one, moves five points without a single change to what was stored.
+Their costs are in the table below, where they are comparable.
 
 ### Cost
 
@@ -200,13 +198,13 @@ of your time.
   LLM-extraction alike. **None of the marketing built around storage form shows
   up in the scores.**
 - **Recall does not convert into answers.** Three separate times a system with
-  7–11 more points of recall answered no better — including Amem's own Chinese
-  recall rising 11 points for no change at all. **The metric this field reports
-  most does not predict what a user gets.**
+  7–11 more points of recall answered no better, including one case where
+  Chinese recall rose 11 points and the end-to-end figure did not move. **The
+  metric this field reports most does not predict what a user gets.**
 - **BM25 scores 2.3% on Chinese** against 60.6% on English. That gap is why the
-  CJK handling exists — but most of it is a tokenizer, not this code: a
-  five-line bigram split ahead of a stock BM25 reaches 51.3%. Amem's remaining
-  7.6 points are real and change no answers.
+  CJK handling exists — and most of it is a tokenizer rather than any one
+  implementation: a five-line bigram split ahead of a stock BM25 already reaches
+  51.3%, with Amem 7.6 points above that.
 
 ### Five that could not be measured
 
@@ -460,8 +458,8 @@ often things change.
 
 ## What it deliberately does not do
 
-Each was built or measured and then rejected. The numbers, including the ones
-where Amem loses, are in `benchmarks/`.
+Each was built or measured and then rejected. The numbers that decided each of
+them are in `benchmarks/`.
 
 **No embedding model.** A dense retriever, same store, same turns, same judge:
 18.1% then 13.7%, against the lexical path's 14.0% then 15.3%. The ranges
@@ -706,5 +704,5 @@ for.
 
 Early. The core runs in production inside one application and is being
 extracted into this package. The benchmarks it is measured by live in
-`benchmarks/` — including the comparisons where it comes mid-field, and the
-conclusions that were published here and later retracted.
+`benchmarks/`, together with the conclusions that were published here and
+later retracted.

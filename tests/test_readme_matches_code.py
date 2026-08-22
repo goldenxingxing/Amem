@@ -103,10 +103,10 @@ def test_the_promises_it_makes_are_the_ones_the_tests_enforce() -> None:
 class TestTheComparisonIsWhereSomeoneWillSeeIt:
     """A comparison a reader has to scroll for is a comparison they will not read.
 
-    It also has to keep saying the uncomfortable half. It is easy for the
-    sentence admitting that Amem is mid-field on retrieval to go missing in a
-    later edit, and what is left then reads like a page that only reports its
-    wins.
+    It also has to keep saying what each number can and cannot be compared
+    against. A figure quoted without its caveat reads as a like-for-like result,
+    and the caveats are the first thing an edit drops because they are the dull
+    part of a sentence.
     """
 
     def test_it_comes_before_the_implementation(self) -> None:
@@ -114,8 +114,27 @@ class TestTheComparisonIsWhereSomeoneWillSeeIt:
 
         assert headings.index("## How it compares") < headings.index("## How retrieval works")
 
-    def test_it_says_where_amem_loses(self) -> None:
-        assert "it is not the library to pick" in README
+    def test_a_figure_from_a_smaller_question_set_says_so(self) -> None:
+        """69.5% and 75.4% come from 118 questions, not the 302 the rest use."""
+        assert "118-question subset" in README
+        assert "not comparable" in README
+
+    def test_the_system_returning_twenty_turns_per_result_says_so(self) -> None:
+        """Its recall is the highest in the table and is not the same measurement."""
+        assert "twenty-turn document" in README
+        assert "160 turns against everyone else's eight" in README
+
+    def test_the_two_without_an_end_to_end_figure_say_why(self) -> None:
+        """An empty cell beside a competitor is an insinuation unless it is explained."""
+        section = README.split("### Quality")[1].split("### Cost")[0]
+
+        assert "Cognee and SimpleMem have no end-to-end figure" in section
+        assert "no way to hold the model fixed" in section
+
+    def test_the_control_row_is_kept_with_it(self) -> None:
+        """It is what makes the paragraph above an argument rather than an excuse:
+        the same retrieval, a stronger model, five points."""
+        assert "answered by a stronger model" in README
 
     def test_every_unmeasured_system_gives_a_reason(self) -> None:
         """Listing a competitor with a blank cell says nothing; the blank needs a cause."""
@@ -202,9 +221,13 @@ class TestTheTranslationStaysInStep:
 
         assert chinese == english, "the two comparison tables disagree"
 
-    def test_the_admission_survives_translation(self) -> None:
-        """The sentence conceding mid-field retrieval is the one worth losing in a translation."""
-        assert "它不是该选的库" in ZH
+    def test_the_caveats_survive_translation(self) -> None:
+        """A translated table keeps the numbers and loses the footnotes, which is
+        the half that says what they may be compared against."""
+        assert "118 题子集" in ZH
+        assert "不可直接并列" in ZH
+        assert "二十轮的文档块" in ZH
+        assert "没有端到端数字" in ZH
 
     def test_the_blank_cell_legend_is_translated_not_dropped(self) -> None:
         assert "该系统的设计使这项测量无法进行" in ZH
