@@ -20,7 +20,17 @@ BEHAVIOURAL_KINDS: frozenset[str] = frozenset({"user", "feedback"})
 LOOKUP_KINDS: frozenset[str] = frozenset({"project", "reference"})
 
 #: ``namespace/slug`` — lowercase, digits, dot, dash, one optional slash.
-_KEY_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)?$")
+#: ``namespace/slug`` — one optional slash, no spaces, nothing dangling.
+#:
+#: Unicode rather than ``a-z0-9``: an agent working in Chinese has no reason to
+#: name its memories in English, and the earlier ASCII rule rejected 会议/纪要
+#: outright. The same mistake was in the tokeniser, where whole scripts silently
+#: retrieved nothing.
+#:
+#: ``[^\W_]`` is "word character, not underscore", which is a letter or a digit
+#: in any script. Underscore, dot and hyphen are allowed after the first
+#: character, so identifiers a model actually writes survive.
+_KEY_RE = re.compile(r"^[^\W_][\w.-]*(/[^\W_][\w.-]*)?$", re.UNICODE)
 _KEY_MAX_LEN = 64
 
 

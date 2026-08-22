@@ -161,6 +161,7 @@ async def propose(
     now: float | None = None,
     system: str = SYSTEM_PROMPT,
     prompt: str = EXTRACTION_PROMPT,
+    today: str | None = None,
 ) -> list[MemoryCandidate]:
     """Facts worth keeping from *conversation*, for someone to approve.
 
@@ -178,12 +179,23 @@ async def propose(
     :func:`parse_candidates` reads — the default is the one the numbers in
     benchmarks/README.md were measured with, and its shape is load-bearing:
     the transcript goes *inside* it, not after it.
+
+    *today* is the date the model resolves "last Tuesday" against, and it
+    defaults to this process's local one. A host serving someone in another
+    timezone should pass theirs: a server in UTC and a user in Shanghai disagree
+    about what day it is for several hours out of every twenty-four, and the
+    prompt asks for a date to be written into a fact that outlives the
+    conversation. A wrong date is worse than none, which is what the prompt
+    itself says.
     """
     try:
         text = (conversation or "").strip()
         if len(text) < MIN_CONVERSATION_CHARS:
             return []
-        today = time.strftime("%Y-%m-%d", time.localtime(now)) if now else time.strftime("%Y-%m-%d")
+        if today is None:
+            today = (
+                time.strftime("%Y-%m-%d", time.localtime(now)) if now else time.strftime("%Y-%m-%d")
+            )
         raw = await complete(
             system,
             prompt.format(conversation=text[-TAIL_CHARS:], today=today),

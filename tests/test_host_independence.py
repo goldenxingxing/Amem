@@ -346,3 +346,152 @@ class TestTheStoreSurvivesTheWorldItIsGiven:
         store.path.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
 
         assert len(amem.Store(root).entries()) == 1
+
+
+class TestTheKeyRuleIsNotEnglishOnly:
+    """An agent working in Chinese has no reason to name its memories in English.
+
+    The rule was `[a-z0-9][a-z0-9._-]*`, so 会议/纪要 was rejected outright — the
+    same ASCII assumption that made whole scripts retrieve nothing, in the field
+    a model chooses itself.
+    """
+
+    @pytest.mark.parametrize(
+        "key", ["ns/slug", "会议/纪要", "報告/日次", "보고서/일일", "отчёт/ежедневный", "数字/123"]
+    )
+    def test_a_key_may_be_written_in_any_script(self, key: str) -> None:
+        assert amem.MemoryEntry(kind="project", content="x", key=key).key == key
+
+    @pytest.mark.parametrize("key", ["a b/c", "a//b", "/leading", "trailing/", "a/b/c"])
+    def test_the_shape_is_still_namespace_slash_slug(self, key: str) -> None:
+        """Widening the alphabet must not widen the structure."""
+        with pytest.raises(ValueError):
+            amem.MemoryEntry(kind="project", content="x", key=key)
+
+    def test_case_is_still_folded(self) -> None:
+        assert amem.MemoryEntry(kind="project", content="x", key="UPPER/Case").key == "upper/case"
+
+
+class TestWhichDayItIs:
+    """The date a model resolves "last Tuesday" against is written into a fact.
+
+    It defaults to this process's local one, which is right on a desktop and
+    arbitrary on a server: a host in UTC and a user in Shanghai disagree about
+    the date for several hours out of every twenty-four, and the prompt itself
+    says a wrong date is worse than none.
+    """
+
+    async def test_a_host_can_state_the_date(self) -> None:
+        sent: list[str] = []
+
+        async def complete(system: str, user: str) -> str:
+            sent.append(user)
+            return "[]"
+
+        await amem.propose(complete, "x" * 400, today="2026-03-05")
+
+        assert "2026-03-05" in sent[0]
+
+    async def test_the_default_is_still_this_machine_s_today(self) -> None:
+        import time
+
+        sent: list[str] = []
+
+        async def complete(system: str, user: str) -> str:
+            sent.append(user)
+            return "[]"
+
+        await amem.propose(complete, "x" * 400)
+
+        assert time.strftime("%Y-%m-%d") in sent[0]
+
+
+class TestTheStoreSurvivesWhatIsPutInIt:
+    """A JSONL file whose records contain newlines is one bad escape from
+    unreadable, and the content comes from conversations nobody controls."""
+
+    @pytest.mark.parametrize(
+        ("label", "content"),
+        [
+            ("newlines", "first\nsecond\nthird"),
+            ("crlf", "a\r\nb"),
+            ("tabs", "a\tb"),
+            ("quotes and backslashes", 'he said "this" and \\that'),
+            ("control characters", "a\x00b\x01c"),
+            ("line separator", "a b"),
+            ("emoji", "记住 🎉 这个"),
+            ("very long", "x" * 100_000),
+        ],
+    )
+    def test_it_comes_back_exactly(self, tmp_path: Path, label: str, content: str) -> None:
+        store = amem.Store(tmp_path)
+
+        store.add("project", content, key="t/1")
+
+        assert [e.content for e in amem.Store(tmp_path).entries()] == [content]
+
+    def test_one_entry_is_one_line(self, tmp_path: Path) -> None:
+        """Otherwise a reader splitting on newlines gets fragments."""
+        store = amem.Store(tmp_path)
+
+        store.add("project", "first\nsecond\nthird", key="t/1")
+
+        assert store.path.read_text(encoding="utf-8").rstrip("\n").count("\n") == 0
+
+    @pytest.mark.parametrize("name", ["my store", "我的记忆库", "store (v2) #1"])
+    def test_the_directory_may_be_named_anything(self, tmp_path: Path, name: str) -> None:
+        store = amem.Store(tmp_path / name)
+
+        store.add("project", "一条事实", key="k/1")
+
+        assert store.search("事实")
+
+
+class TestMoreThanOneWriter:
+    """A web worker, a background job, and the request that started them."""
+
+    def test_threads_do_not_lose_writes(self, tmp_path: Path) -> None:
+        import threading
+
+        store = amem.Store(tmp_path)
+        errors: list[BaseException] = []
+
+        def write(i: int) -> None:
+            try:
+                store.add("project", f"from thread {i}", key=f"t/{i}")
+            except BaseException as exc:
+                errors.append(exc)
+
+        threads = [threading.Thread(target=write, args=(i,)) for i in range(20)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert not errors
+        assert len(amem.Store(tmp_path).entries()) == 20
+
+    def test_the_file_is_never_left_torn(self, tmp_path: Path) -> None:
+        """Every line has to parse, whoever was writing when."""
+        import json
+        import threading
+
+        store = amem.Store(tmp_path)
+        threads = [
+            threading.Thread(
+                target=store.add,
+                args=(
+                    "project",
+                    f"entry {i}",
+                ),
+            )
+            for i in range(20)
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        for line in store.path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                json.loads(line)
