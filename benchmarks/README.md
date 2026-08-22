@@ -37,6 +37,10 @@ On the same subset Amem scores 61.9% against MemOS's 69.5%.
 **†** Not the same budget: one Cognee "result" is a twenty-turn document, so
 eight results are 160 turns against everyone else's eight.
 
+The README carries a shorter version of this table, for choosing. This is the
+full one: nothing that was measured is left out of it, including the rows Amem
+loses.
+
 **Amem comes mid-field, and the honest summary is that it is not the retriever
 to pick if retrieval quality is what you are optimising.** Three things are
 worth taking from the table beyond the ranking.
