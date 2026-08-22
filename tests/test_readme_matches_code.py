@@ -38,20 +38,20 @@ LINES = _RAW.splitlines()
 def test_the_budget_it_quotes_is_the_budget_in_force() -> None:
     """ "about eight thousand characters exist for all of it"."""
     assert BEHAVIOURAL_BUDGET_CHARS == 8_000
-    assert "eight thousand characters" in README
+    assert "eight thousand characters" in DESIGN
 
 
 def test_the_pressure_threshold_it_quotes_is_the_one_used() -> None:
     assert PRESSURE_WARN_AT == 0.75
-    assert "raised at 75%" in README
+    assert "raised at 75%" in DESIGN or "75%" in README
 
 
 def test_the_escalation_threshold_it_quotes_is_the_one_used() -> None:
     """Both pages quote it, and a page quoting a threshold nobody uses is worse
     than a page that stays quiet about one."""
     assert PRESSURE_ACT_AT == 0.80
-    assert "Past 80% the advisory" in README
-    assert "超过 80% 之后" in ZH
+    assert "Past 80% the advisory" in DESIGN
+    assert "超过 80% 之后" in DESIGN_ZH
 
 
 def test_both_pages_document_the_answer_that_is_not_retirement() -> None:
@@ -112,7 +112,7 @@ class TestTheComparisonIsWhereSomeoneWillSeeIt:
     def test_it_comes_before_the_implementation(self) -> None:
         headings = [line for line in _RAW.splitlines() if line.startswith("## ")]
 
-        assert headings.index("## How it compares") < headings.index("## How retrieval works")
+        assert headings.index("## How it compares") < headings.index("## How it works, briefly")
 
     def test_a_figure_from_a_smaller_question_set_says_so(self) -> None:
         """69.5% and 75.4% come from 118 questions, not the 302 the rest use."""
@@ -187,6 +187,18 @@ class TestTheComparisonIsWhereSomeoneWillSeeIt:
 
 
 ZH = (Path(__file__).resolve().parents[1] / "README.zh-CN.md").read_text(encoding="utf-8")
+
+#: The mechanisms moved off the front page. A reader deciding whether to use
+#: this needs the result; the derivations are reference. Both still have to
+#: agree with the code, so the checks followed them here.
+_DESIGN_RAW = (Path(__file__).resolve().parents[1] / "DESIGN.md").read_text(encoding="utf-8")
+
+#: Line breaks removed, like README above: a phrase these check for can be
+#: wrapped across two lines by an editor and the check would fail on the
+#: formatting rather than on the claim.
+DESIGN = " ".join(_DESIGN_RAW.split())
+DESIGN_ZH = (Path(__file__).resolve().parents[1] / "DESIGN.zh-CN.md").read_text(encoding="utf-8")
+_DESIGN_ZH_RAW = DESIGN_ZH
 
 
 class TestTheTranslationStaysInStep:
@@ -391,3 +403,38 @@ def test_both_pages_show_the_same_integration() -> None:
         return set(re.findall(r"(?:amem|store)\.\w+", block))
 
     assert calls(ZH, "### 完整接入") == calls(_RAW, "### The whole integration")
+
+
+class TestTheTwoPagesDoNotDrift:
+    """The mechanisms live in DESIGN.md and the front page summarises them.
+
+    Two files describing one thing is how a summary ends up claiming something
+    the detail no longer says. The numbers are what drift silently — prose gets
+    reread, a threshold in a sentence does not.
+    """
+
+    def test_the_front_page_links_to_the_detail(self) -> None:
+        assert "DESIGN.md" in _RAW
+        assert "DESIGN.zh-CN.md" in ZH
+
+    def test_the_detail_links_back(self) -> None:
+        assert "README.md" in DESIGN
+        assert "README.zh-CN.md" in _DESIGN_ZH_RAW
+
+    def test_the_summary_quotes_the_thresholds_the_detail_does(self) -> None:
+        for figure in ("75%", "two characters"):
+            assert figure in " ".join(_RAW.split()), f"the summary dropped {figure}"
+            assert figure in DESIGN, f"the detail dropped {figure}"
+
+    def test_both_design_pages_cover_the_same_mechanisms(self) -> None:
+        assert len([x for x in DESIGN.split("## ") if x]) == len(
+            [x for x in _DESIGN_ZH_RAW.split("## ") if x]
+        )
+
+    def test_the_summary_names_every_mechanism_the_detail_explains(self) -> None:
+        """A mechanism explained in DESIGN and unmentioned on the front page is
+        one nobody will know to go and read about."""
+        summary = _RAW.split("## How it works, briefly")[1].split("## What it deliberately")[0]
+
+        for word in ("extraction", "Retrieval", "duplicate", "75%"):
+            assert word in summary

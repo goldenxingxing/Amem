@@ -229,6 +229,19 @@ python translate_zh.py          # needs BENCH_* below; writes locomo10_zh.json
 Translation is safe for this metric — the gold labels are turn ids, so the
 ground truth survives it, and everything but the language is held fixed.
 
+## Two findings worth more than the ranking
+
+- **What predicts accuracy is whether an LLM runs at query time.** Not what is
+  stored, not how it is retrieved. The systems that run one lead; the seven that
+  do not sit between 43.0% and 54.5%, close enough that a ten-point spread
+  covers all of them, and that group contains pure lexical, pure dense, hybrid
+  and LLM-extraction alike. None of the marketing built around storage form
+  shows up in the scores.
+- **BM25 scores 2.3% on Chinese** against 60.6% on English. That gap is why the
+  CJK handling exists, and most of it is a tokenizer rather than any one
+  implementation: a five-line bigram split ahead of a stock BM25 already reaches
+  51.3%, with Amem 7.6 points above that.
+
 ### Environment
 
 ```bash
