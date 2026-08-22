@@ -189,7 +189,7 @@ anyone asks for, and on 243 real turns **89% were instructions** where nothing
 is queried at all. A memory that only works when asked is not working for 89%
 of your time.
 
-### Three findings worth more than the ranking
+### Two findings worth more than the ranking
 
 - **What predicts accuracy is whether an LLM runs at query time** — not what is
   stored, not how it is retrieved. The systems that run one lead; the seven that
@@ -197,10 +197,6 @@ of your time.
   spread, and that group contains pure lexical, pure dense, hybrid and
   LLM-extraction alike. **None of the marketing built around storage form shows
   up in the scores.**
-- **Recall does not convert into answers.** Three separate times a system with
-  7–11 more points of recall answered no better, including one case where
-  Chinese recall rose 11 points and the end-to-end figure did not move. **The
-  metric this field reports most does not predict what a user gets.**
 - **BM25 scores 2.3% on Chinese** against 60.6% on English. That gap is why the
   CJK handling exists — and most of it is a tokenizer rather than any one
   implementation: a five-line bigram split ahead of a stock BM25 already reaches
