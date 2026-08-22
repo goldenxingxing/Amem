@@ -61,19 +61,6 @@ The last three rows are design choices rather than scores, but they decide
 whether you can **trust it, correct it, and rely on it to govern behaviour**.
 No competitor offers any of the three.
 
-### What the alternatives charge you
-
-Every line here was measured, not read off a page of documentation.
-
-| System | What it costs you |
-|---|---|
-| **mem0** | A 360 MB dependency tree plus an embedding model. 300× slower to build (30.5 s against 0.0 s) and 79× slower to query. **In 2026-04 it dropped UPDATE/DELETE consolidation for single-pass accumulation**, and on six revised facts it answered 1 with the superseded value and put old and new side by side on another without saying which holds; of three never-revised rules it kept 1. |
-| **Cognee** | Every query is an LLM call — there is no local index, so no offline use, no predictable latency, no free lookups. ~**20 minutes** to build 788 turns. Its recall looks high (75.4%) because one "result" is a **twenty-turn document**: eight results are 160 turns against everyone else's eight. |
-| **SimpleMem** | The best end-to-end quality here (76.3%), paid for with a ~**2-hour** build, an LLM call per query, and the fact that **it returns answers and never the source turns** — you cannot check what it based an answer on, or find the source when it is wrong. |
-| **MemOS** | A ~1.2 GB environment and an LLM call per query, for **47.0% end-to-end — below a purely local lexical baseline**. Its recall advantage (69.5%) does not convert into answers. |
-| **txtai · LlamaIndex BM25** | These are **retrievers, not memory**: no notion of a fact being superseded, no kinds, no approval, and an in-memory index that must be rebuilt whole on every write. BM25 scores **2.3% on Chinese**. |
-| **Graphiti · Zep · Letta · Memori · TencentDB** | Could not be run at all — see "Five that could not be measured" below. |
-
 ### Quality
 
 Recall@8 is deterministic — it asks whether the turn holding the answer came
@@ -297,7 +284,12 @@ store stay a file a person can edit.
 
 ## How retrieval works
 
-Two mechanisms, and which leads depends on the writing system of the query.
+Two mechanisms, and which leads depends on the writing system of the query —
+not on which language it is, but on whether that script marks word boundaries.
+Scripts that separate words (Latin, Cyrillic, Greek, Arabic, Hebrew, Hangul,
+Devanagari) are matched on whole terms; scripts written without spaces (Han,
+kana, Thai, Lao, Khmer, Myanmar) are matched on character windows, because
+there is nothing else to cut on.
 
 **The index** is SQLite FTS5 with the `trigram` tokenizer. The default
 `unicode61` splits on non-alphanumerics, and Chinese has no spaces — a whole
@@ -336,24 +328,18 @@ Chinese recall@8 went from 47.7% to 58.9% on that change alone.
 
 ### Why it stays fast
 
-A substring pass is linear, which is fine at the tens of entries memory was
-designed for and is most of a second at twenty thousand. Two things fix that
-without changing what matches:
-
-- **A posting list over entry bigrams.** Document frequency becomes a row
-  count and candidates come out of the same lookup, so a query never touches
-  entries that cannot match.
-- **Incremental indexing.** The index used to be dropped and rebuilt whenever
-  the store changed — and the store changes on every write, so adding one
-  memory made the next search reindex everything.
-
-At twenty thousand entries: a Chinese query went from 66 ms to 9.8 ms, and a
+A substring pass is linear — fine at the tens of entries memory was designed
+for, most of a second at twenty thousand. Two things fix that without changing
+what matches: **a posting list over entry bigrams**, so document frequency is a
+row count and a query never touches entries that cannot match, and
+**incremental indexing**, because the index used to be rebuilt on every write.
+At twenty thousand entries a Chinese query went from 66 ms to 9.8 ms, and a
 write followed by a search from about 756 ms to 50 ms.
 
 Both paths share one ranking function. When they had separate scoring code they
 disagreed on 96 of 197 real questions — the same weights summed in a different
 order reorder ties, and one of those ties was the correct answer leaving the
-top eight. A test asserts per query that they agree.
+top eight.
 
 ---
 
@@ -437,18 +423,15 @@ duplicate, interrupted the other way leaves the requirements gone.
 
 ### Staleness is handled by dating, not by merging
 
-Worth stating plainly, because it is the opposite of what the design expected.
+The opposite of what the design expected. Measured on twelve sessions where six
+facts were revised: dedup fired **zero** times and by design cannot — differing
+numbers are a veto, and `5494` against `8721` is exactly that shape. What made
+every answer current was that both versions sit in the store and **each carries
+its date**.
 
-Measured on twelve sessions where six facts were revised: dedup fired **zero**
-times, and by design cannot fire — differing numbers are a veto, and `5494`
-against `8721` is exactly that shape. What made every answer current was that
-both versions sit in the store and **each carries its date**, so a reader can
-order them.
-
-Which reclassifies consolidation. It is not there to keep the store *correct* —
-dating does that. It is there to keep the store *affordable*, because every
-revision leaves two entries behind and the ceiling arrives faster the more
-often things change.
+Which reclassifies consolidation: it is not there to keep the store *correct*,
+dating does that. It is there to keep it *affordable*, because every revision
+leaves two entries behind.
 
 ---
 
@@ -556,6 +539,21 @@ gains a verb. `affirm` reports `False` there deliberately: it stores no fact
 and removes none, it records that a question was answered, and asking someone
 to approve the storing of their own answer is a loop with nothing at the end.
 
+If your agent reaches these through a tool of its own, say so — the preamble
+tells it what to call, so the wording has to name something that exists in your
+host:
+
+```python
+amem.render(entries, recent, pending, actions=amem.Actions(
+    search='`Memory({"op": "search", "query": "<query>"})`',
+    promote='`Memory({"op": "promote", "id": "<id>"})`',
+    ...
+))
+```
+
+The defaults are the operations above, so a host that passes them to `execute`
+needs no override at all.
+
 Doing it without the operation layer is the same call:
 
 ```python
@@ -567,7 +565,9 @@ store.keep(candidate_id)                  # only after someone said yes
 
 ### Keeping it affordable
 
-The store fills, entries stop being true, and none of this acts on its own:
+The store fills and entries stop being true. None of this acts on its own — see
+[How the store stays affordable](#how-the-store-stays-affordable) for what each
+one means:
 
 ```python
 fit, held = amem.pressure(store.entries(), amem.BEHAVIOURAL_BUDGET_CHARS)
@@ -575,15 +575,11 @@ amem.find_superseded(store.entries())     # a newer entry that replaced an older
 amem.find_dormant(store.entries(), now=time.time())
 
 store.affirm("reports/daily")             # raised, and it still holds
-store.consolidate(merged_text, replacing=["reports/v1", "reports/v2"])
+store.consolidate(merged, replacing=["reports/v1", "reports/v2"])
 store.retire("api/version")               # out of the preamble, still in the file
 ```
 
 Prefer `consolidate` over `retire` when a later entry restates an earlier one.
-A later instruction usually *adds* to the one before it, and what it leaves out
-is still required — on a real store the third generation of a rule had dropped
-three requirements the first two carried, and retiring on the suggestion would
-have removed them with nothing to show it happened.
 
 ### If you are running on a server
 
@@ -602,29 +598,15 @@ Shanghai disagrees about the date for several hours out of every twenty-four.
 recorded are its own; it must take `{conversation}` and `{today}`, and copying
 the function to change one paragraph is how a fork starts.
 
-### Which alphabet you write in
-
-Retrieval treats a script by whether it marks word boundaries, not by which
-language it is. Scripts that separate words — Latin, Cyrillic, Greek, Arabic,
-Hebrew, Hangul, Devanagari — are matched on whole terms; scripts written
-without spaces — Han, kana, Thai, Lao, Khmer, Myanmar — are matched on
-character windows, because there is nothing else to cut on.
-
-This used to be Han and ASCII, and everything else produced no searchable terms
-at all: a query in Korean or Russian returned nothing, silently, with the entry
-sitting in the store. Japanese written in kana did the same — the Japanese that
-appeared to work was passing on its Han characters.
-
 ## What if there is nobody to approve
 
-The approval gate is the one thing here no alternative offers, so it is worth
-being exact about what it needs — and it is not a user interface. It needs a
-decision by a person, and in an agent the conversation is where that happens:
-`render` puts pending proposals in the opening context and the agent raises one
-when it is relevant. No UI is involved in that, and none is provided here.
+The gate needs a decision by a person, not a user interface. In an agent the
+conversation is where that happens: `render` puts pending proposals in the
+opening context and the agent raises one when it is relevant.
 
-There is deliberately no setting that approves for you. Not because it cannot
-be done — it is three lines, and they belong in your code:
+There is deliberately no setting that approves for you — not because it cannot
+be done, but because it is three lines that belong in your code, where a
+reviewer can see them:
 
 ```python
 for candidate in await propose(complete, transcript):
@@ -632,33 +614,12 @@ for candidate in await propose(complete, transcript):
     store.keep(candidate.id)          # unattended: no one is going to be asked
 ```
 
-The difference is not capability, it is where the decision is recorded. Written
-out like that it is a line a reviewer can see, argue with, and delete. As a
-default it would be the behaviour of everyone who never looked, and the one
-column this project can claim over every alternative would quietly read the
+As a default it would be the behaviour of everyone who never looked, and the
+one column this project can claim over every alternative would quietly read the
 same as theirs.
 
 Nothing accumulates if nobody decides: proposals cap at twelve and expire after
-a fortnight. A queue nobody clears is noise in every future session, and a
-proposal nobody acted on for two weeks was not worth acting on.
-
-### Naming what the agent can call
-
-The preamble tells an agent how to act on what it describes, so the wording has
-to name something that exists in your host:
-
-```python
-render(entries, recent, pending, actions=Actions(
-    search='`Memory({"op": "search", "query": "<query>"})`',
-    promote='`Memory({"op": "promote", "id": "<id>"})`',
-    ...
-))
-```
-
-The defaults name this library's own methods, which is right when you drive the
-store directly and visibly approximate when you have a tool layer. That is the
-better of the two failures: this used to name one particular application's
-tool, which read as authoritative and was wrong everywhere else.
+a fortnight.
 
 ## Checking that it is actually working
 
