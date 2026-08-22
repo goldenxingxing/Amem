@@ -549,56 +549,111 @@ pip install git+https://github.com/goldenxingxing/Amem
 Not on PyPI yet — the name is reserved but nothing is published while the API
 can still move. Pin a commit if you depend on it.
 
-```python
-from amem import Store, propose, render
+### The whole integration
 
-store = Store("~/.myagent/memory")
-```
-
-**Opening a conversation** — what the agent is told before anyone speaks. No
-query, because the things it most needs to know are the things nobody would
-think to ask for:
+Four places to call it. This is a complete host, not a sketch: it was written
+against a fresh install and run, and it is twenty-three lines because the
+package does the rest.
 
 ```python
-preamble = render(store.entries(), store.recent(), store.pending())
+import amem
+
+store = amem.Store("~/.myagent/memory")          # your path; `~` is expanded
+
+# 1. Opening the conversation. No query — what the agent most needs to know
+#    is what nobody would think to ask for.
+def opening_context() -> str:
+    return amem.render(store.entries(), store.recent(), store.pending())
+
+# 2. One tool. The operations are validated data, and executing them is
+#    included; what stays yours is whether to ask first.
+async def memory_tool(payload: dict) -> str:
+    try:
+        op = amem.parse_operation(payload)
+    except amem.UnknownOperation as exc:
+        return f"error: {exc}"                    # names the real operations
+    if op.writes and not await ask_the_user(op.describe()):
+        return "declined"
+    return amem.execute(store, op).model_dump_json(exclude_defaults=True)
+
+# 3. Ending it. Extraction notices; a person decides.
+async def on_session_end(transcript: str, complete) -> None:
+    store.suggest(await amem.propose(complete, transcript))
+    store.note_topics(transcript)                 # feeds the dormancy ranking
+    append_summary(store.directory / "recent.jsonl", summary_of(transcript))
+
+# 4. Whatever your approval is. A dialog, a CLI prompt, a policy — this
+#    package has no opinion, and no way to answer for you.
+async def ask_the_user(what: str) -> bool: ...
 ```
 
-**During** — what it can look up when it half-remembers something:
+`complete` is your model. Anything matching `async (system, user) -> str`
+works; nothing here imports a client or reads an environment variable.
+
+### The operations
+
+`parse_operation` validates, `execute` performs. Twelve verbs, each mapping to
+a `Store` method, so a host that wires this function needs no schema of its own:
+
+- **`search`**, **`get`**, **`list`** — reading
+- **`add`** — a fact the user stated outright, so there is no approval to ask for
+- **`promote`**, **`dismiss`** — the queue: the only path from proposal to memory
+- **`update`**, **`delete`** — changing or removing one
+- **`retire`**, **`restore`** — out of the preamble without being lost
+- **`affirm`** — this one still holds, the answer that is not retirement
+- **`consolidate`** — replace several with one that keeps what all of them said
+
+`op.writes` says whether performing it changes the store, so a host gating
+writes does not keep its own list — and cannot fall behind when this package
+gains a verb. `affirm` reports `False` there deliberately: it stores no fact
+and removes none, it records that a question was answered, and asking someone
+to approve the storing of their own answer is a loop with nothing at the end.
+
+Doing it without the operation layer is the same call:
 
 ```python
-for hit in store.search("where do daily reports go"):
-    print(hit.handle, hit.snippet)
-
-entry = store.get("reports/daily")      # by key, id, or id prefix
+store.add("project", "Reports go in output/reports/daily/.", key="reports/daily")
+store.search("where do daily reports go")
+store.get("reports/daily")                # by key, id, or unambiguous id prefix
+store.keep(candidate_id)                  # only after someone said yes
 ```
 
-**Closing** — what it noticed, for a person to decide on. `complete` is your
-model; anything matching `async (system, user) -> str` works:
+### Keeping it affordable
+
+The store fills, entries stop being true, and none of this acts on its own:
 
 ```python
-for candidate in await propose(complete, transcript, session_id=session.id):
-    store.suggest([candidate])          # queued, not stored
+fit, held = amem.pressure(store.entries(), amem.BEHAVIOURAL_BUDGET_CHARS)
+amem.find_superseded(store.entries())     # a newer entry that replaced an older
+amem.find_dormant(store.entries(), now=time.time())
 
-store.keep(candidate_id)                # only after someone said yes
-store.dismiss(candidate_id)
-
-store.note_topics(transcript)           # feeds the dormancy ranking
+store.affirm("reports/daily")             # raised, and it still holds
+store.consolidate(merged_text, replacing=["reports/v1", "reports/v2"])
+store.retire("api/version")               # out of the preamble, still in the file
 ```
 
-**Over time** — the store fills, and entries stop being true:
+Prefer `consolidate` over `retire` when a later entry restates an earlier one.
+A later instruction usually *adds* to the one before it, and what it leaves out
+is still required — on a real store the third generation of a rule had dropped
+three requirements the first two carried, and retiring on the suggestion would
+have removed them with nothing to show it happened.
+
+### If you are running on a server
+
+Two things default to this process, which is right on a desktop and arbitrary
+in a request handler:
 
 ```python
-from amem import find_dormant, find_superseded, pressure
-
-fit, held = pressure(store.entries(), BEHAVIOURAL_BUDGET_CHARS)
-find_superseded(store.entries())        # a newer entry that replaced an older
-find_dormant(store.entries(), now=...)  # subjects that stopped coming up
-
-store.retire("api/version")             # out of the preamble, still in the file
-store.restore("api/version")
+await amem.propose(complete, transcript, today=user_local_date)
+await amem.propose(complete, transcript, prompt=your_own_template)
 ```
 
----
+`today` is what the model resolves "last Tuesday" against, and it is written
+into a fact that outlives the conversation — a host in UTC serving someone in
+Shanghai disagrees about the date for several hours out of every twenty-four.
+`prompt` is for a host whose domain, languages or rules about what may be
+recorded are its own; it must take `{conversation}` and `{today}`, and copying
+the function to change one paragraph is how a fork starts.
 
 ### Which alphabet you write in
 

@@ -260,3 +260,111 @@ class TestTheChineseTypesetsCorrectly:
         assert ZH.count("（") == ZH.count("）")
         assert ZH.count("“") == ZH.count("”")
         assert ZH.count("「") == ZH.count("」")
+
+
+class TestTheUsageBlockRuns:
+    """The integration in the README is executed, not proofread.
+
+    A usage example is the first thing a reader copies and the last thing
+    anyone re-runs. This one names every call a host makes, so it goes stale
+    the moment a signature moves — and a stale one costs more than none: it
+    reads as tested.
+    """
+
+    def _integration_block(self, text: str, heading: str) -> str:
+        section = text[text.index(heading) :]
+        return re.search(r"```python\n(.*?)```", section, re.S).group(1)
+
+    def test_every_call_it_names_exists(self, tmp_path: Path) -> None:
+        import amem
+
+        block = self._integration_block(_RAW, "### The whole integration")
+        # Against an instance, not the class: `directory` is set in __init__,
+        # and a check that misses it would also miss a renamed attribute.
+        store = amem.Store(tmp_path)
+
+        for name in set(re.findall(r"amem\.(\w+)", block)):
+            assert hasattr(amem, name), f"README names amem.{name}"
+        for name in set(re.findall(r"store\.(\w+)", block)):
+            assert hasattr(store, name), f"README names store.{name}"
+
+    def test_it_compiles(self) -> None:
+        """Catches the half-edited paste — the failure a reader hits first."""
+        block = self._integration_block(_RAW, "### The whole integration")
+
+        compile(block, "README.md", "exec")
+
+    def test_it_actually_stores_and_retrieves(self, tmp_path: Path) -> None:
+        """Run as written, with only the two things it says are the host's.
+
+        The four calls in it are the whole contract this package offers a host,
+        so this is the closest thing here to an integration test for somebody
+        else's application.
+        """
+        import asyncio
+
+        block = self._integration_block(_RAW, "### The whole integration")
+        source = block.replace(
+            'store = amem.Store("~/.myagent/memory")',
+            f"store = amem.Store({str(tmp_path)!r})",
+        ).replace(
+            "async def ask_the_user(what: str) -> bool: ...",
+            "async def ask_the_user(what: str) -> bool:\n    return True",
+        )
+        namespace: dict[str, object] = {
+            "append_summary": lambda *a, **k: None,
+            "summary_of": lambda text: text,
+        }
+        exec(compile(source, "README.md", "exec"), namespace)
+
+        async def model(system: str, user: str) -> str:
+            return (
+                '[{"kind": "project", "content": "报告写在 output/reports/ 下。",'
+                ' "key": "报告/日次"}]'
+            )
+
+        asyncio.run(namespace["on_session_end"]("用户：报告写在 output/reports/ 下。" * 20, model))
+        store = namespace["store"]
+        assert len(store.pending()) == 1, "extraction queued nothing"
+
+        promoted = asyncio.run(
+            namespace["memory_tool"]({"op": "promote", "id": store.pending()[0].id})
+        )
+        assert "报告/日次" in promoted
+
+        found = asyncio.run(namespace["memory_tool"]({"op": "search", "query": "报告写在哪"}))
+        assert "报告/日次" in found
+        assert "报告/日次" in namespace["opening_context"]()
+
+    def test_an_unknown_operation_is_answered_usefully(self, tmp_path: Path) -> None:
+        """The README shows the error path; it has to be worth showing."""
+        import asyncio
+
+        block = self._integration_block(_RAW, "### The whole integration")
+        source = block.replace(
+            'store = amem.Store("~/.myagent/memory")',
+            f"store = amem.Store({str(tmp_path)!r})",
+        ).replace("async def ask_the_user(what: str) -> bool: ...", "")
+        namespace: dict[str, object] = {}
+        exec(compile(source, "README.md", "exec"), namespace)
+
+        answer = asyncio.run(namespace["memory_tool"]({"op": "teleport"}))
+
+        assert "teleport" in answer
+        assert "search" in answer, "it should name the operations that do exist"
+
+
+def test_both_pages_show_the_same_integration() -> None:
+    """A translated example is where a reader in that language starts.
+
+    It drifts the same way the prose does, and worse: prose that lags is
+    confusing, code that lags does not run. Compared on the calls rather than
+    the comments, which are the translator's.
+    """
+
+    def calls(text: str, heading: str) -> set[str]:
+        section = text[text.index(heading) :]
+        block = re.search(r"```python\n(.*?)```", section, re.S).group(1)
+        return set(re.findall(r"(?:amem|store)\.\w+", block))
+
+    assert calls(ZH, "### 完整接入") == calls(_RAW, "### The whole integration")

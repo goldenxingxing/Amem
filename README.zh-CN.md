@@ -337,55 +337,92 @@ pip install git+https://github.com/goldenxingxing/Amem
 
 还没发到 PyPI —— 名字占住了，但在 API 还可能变动期间不发包。要依赖它就锁一个 commit。
 
-```python
-from amem import Store, propose, render
+### 完整接入
 
-store = Store("~/.myagent/memory")
-```
-
-**开启一次对话** —— 在任何人开口之前 agent 被告知的东西。不需要查询，因为它最需要知道的那些事，恰恰是没人会想到去问的：
+四个调用点。下面**不是示意，是一个完整的宿主**：它是照着全新安装写完跑通的，一共二十三行，因为其余的事这个包自己做了。
 
 ```python
-preamble = render(store.entries(), store.recent(), store.pending())
+import amem
+
+store = amem.Store("~/.myagent/memory")          # 路径是你的；`~` 会被展开
+
+# 1. 开场。不需要查询 —— agent 最需要知道的那些事，恰恰是没人会想到去问的。
+def opening_context() -> str:
+    return amem.render(store.entries(), store.recent(), store.pending())
+
+# 2. 一个工具。操作是校验过的数据，执行也包含在内；
+#    留给你的是"要不要先问一句"。
+async def memory_tool(payload: dict) -> str:
+    try:
+        op = amem.parse_operation(payload)
+    except amem.UnknownOperation as exc:
+        return f"error: {exc}"                    # 会列出真实存在的操作
+    if op.writes and not await ask_the_user(op.describe()):
+        return "declined"
+    return amem.execute(store, op).model_dump_json(exclude_defaults=True)
+
+# 3. 结束。抽取只负责注意到，决定权在人。
+async def on_session_end(transcript: str, complete) -> None:
+    store.suggest(await amem.propose(complete, transcript))
+    store.note_topics(transcript)                 # 供休眠排序使用
+    append_summary(store.directory / "recent.jsonl", summary_of(transcript))
+
+# 4. 你的批准方式。对话框、命令行、一条策略 —— 这个包对此没有意见，
+#    也没有办法替你回答。
+async def ask_the_user(what: str) -> bool: ...
 ```
 
-**过程中** —— 当它隐约记得有这么回事时能去查的：
+`complete` 是你的模型。任何符合 `async (system, user) -> str` 的东西都行；这里不 import 任何客户端，也不读任何环境变量。
+
+### 那些操作
+
+`parse_operation` 校验，`execute` 执行。十二个动词，每个对应一个 `Store` 方法，所以接了这个函数的宿主**不需要自己再定义一套 schema**：
+
+- **`search`**、**`get`**、**`list`** —— 读
+- **`add`** —— 用户直接说出来的事实，没什么可批准的
+- **`promote`**、**`dismiss`** —— 队列：从提案变成记忆的唯一通道
+- **`update`**、**`delete`** —— 改或删
+- **`retire`**、**`restore`** —— 移出开场注入但不丢失
+- **`affirm`** —— 这条仍然有效，那个"不是退役"的答复
+- **`consolidate`** —— 合并成一条，把每条说过的都保住
+
+`op.writes` 说明这个操作会不会改动库，所以**要在写入前征询的宿主不必自己维护一张表**，也就不会在这个包新增动词时落后。`affirm` 在这里故意报 `False`：它不存事实也不删事实，只记录一个问题被回答了，而让人批准"记下他自己的答复"是个没有出口的循环。
+
+不走操作层也是同样的调用：
 
 ```python
-for hit in store.search("日报写在哪个目录"):
-    print(hit.handle, hit.snippet)
-
-entry = store.get("reports/daily")      # 用 key、id 或 id 前缀
+store.add("project", "日报写在 output/reports/daily/ 下。", key="reports/daily")
+store.search("日报写在哪个目录")
+store.get("reports/daily")                # 用 key、id 或不产生歧义的 id 前缀
+store.keep(candidate_id)                  # 只在有人点头之后
 ```
 
-**结束时** —— 它注意到的东西，交给人去决定。`complete` 是你的模型，任何符合 `async (system, user) -> str` 的东西都可以：
+### 让它不越用越贵
+
+库会填满，条目会不再成立，而这些**一个都不自己动手**：
 
 ```python
-for candidate in await propose(complete, transcript, session_id=session.id):
-    store.suggest([candidate])          # 入队，不入库
+fit, held = amem.pressure(store.entries(), amem.BEHAVIOURAL_BUDGET_CHARS)
+amem.find_superseded(store.entries())     # 被新条目取代的旧条目
+amem.find_dormant(store.entries(), now=time.time())
 
-store.keep(candidate_id)                # 只在有人点头之后
-store.dismiss(candidate_id)
-
-store.note_topics(transcript)           # 供休眠排序使用
+store.affirm("reports/daily")             # 提过了，而且它仍然有效
+store.consolidate(合并后的文本, replacing=["reports/v1", "reports/v2"])
+store.retire("api/version")               # 移出开场注入，但仍在文件里
 ```
 
-**长期** —— 库会填满，条目会不再成立：
+**当新条目是在复述旧条目时，优先用 `consolidate` 而不是 `retire`。** 后来的指令通常是在旧的之上**补充**，它没写到的部分仍然是要求 —— 在一个真实的库上，同一条规则的第三代丢掉了前两代带着的三项要求，照建议退役会把它们无声地抹掉。
+
+### 如果你跑在服务端
+
+有两处默认取自当前进程，这在桌面上是对的，在请求处理里是任意的：
 
 ```python
-from amem import find_dormant, find_superseded, pressure
-
-fit, held = pressure(store.entries(), BEHAVIOURAL_BUDGET_CHARS)
-find_superseded(store.entries())        # 被新条目取代的旧条目
-find_dormant(store.entries(), now=...)  # 主题不再出现的条目
-
-store.retire("api/version")             # 移出开场注入，但仍在文件里
-store.restore("api/version")
+await amem.propose(complete, transcript, today=用户当地日期)
+await amem.propose(complete, transcript, prompt=你自己的模板)
 ```
 
-两者都只返回**建议**，都不删除任何东西：退役一条仍然生效的规则会改变 agent 的行为却不留痕迹，所以这个决定归人。
-
----
+`today` 是模型解析"上周二"的基准，而它会被写进一条比对话活得更久的事实里 —— **一台 UTC 的服务器和一个上海的用户，每天有好几个小时对"今天是哪天"看法不一致**。`prompt` 留给领域、语言或"什么可以被记录"的规则是自己那一套的宿主；它必须接受 `{conversation}` 和 `{today}`，而为了改一段话去复制那个函数，就是 fork 的开始。
 
 ### 你用哪种文字
 
