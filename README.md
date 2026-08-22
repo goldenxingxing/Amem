@@ -14,29 +14,24 @@ database, no embedding model, nothing to install beyond Python.
 
 ## Why it exists
 
-Most memory libraries are a vector store behind a retrieval call: you ask, it
-finds. That answers one shape of question well and leaves two problems
-unsolved.
+Most memory libraries are a vector store and a retrieval call: you ask, it
+finds. That answers one kind of question well and leaves two unanswered.
 
 **Some memories are never asked for.** "Never put function names in the
-external docs" is followed by *not* doing something. Nobody types a query that
-retrieves it, and a system that only answers queries never surfaces it — so
-the rule sits in the database, correct and inert, while the agent breaks it.
+external docs" is obeyed by *not* doing something. Nobody types a query that
+retrieves it, and a system that only answers queries never surfaces it — so the
+rule sits correctly in the database while the agent breaks it. Measured over 243
+real turns from one user: **89% were instructions** ("fix this", "run the
+tests", "ship it"), where no retrieval happens and only memory that arrives
+unasked can help. 8% asked for a single stored fact. 2.5% needed several
+combined.
 
-Measured on 243 real turns from one user's working history: **89% were
-instructions** ("fix this", "run the tests", "ship it"), where nothing is
-queried at all and the only memory that can help is memory that arrived
-uninvited. 8% asked for a single stored fact. 2.5% needed several combined.
+**Something has to decide what is kept.** Extraction can *notice* a fact; it
+must not be able to *write* one. Every other library here writes silently — you
+find out what it recorded by going to look.
 
-**Somebody has to decide what is remembered.** Extraction can notice a fact;
-it should not be able to write one. Every other library in this space writes
-silently — you find out what it recorded about you afterwards, if you look.
-
-Amem is built around those two answers: memory is split by whether it must be
-present or can be looked up, and nothing reaches the store without a person
-saying yes.
-
----
+Both answers are the design: memory is split by whether it must be present or
+can be looked up, and **nothing enters the store without a person saying so**.
 
 ## How it compares
 
@@ -81,34 +76,36 @@ Every line here was measured, not read off a page of documentation.
 
 ### Quality
 
-End-to-end accuracy is LLM-judged over 120 questions, reported as a mean with
-the spread across identical runs, because **the same system varies by up to ten
-points between them**. Recall@8 is deterministic — it asks whether the turn
-holding the answer came back — over 302 questions.
+Recall@8 is deterministic — it asks whether the turn holding the answer came
+back — over 302 questions. End-to-end accuracy is LLM-judged over 120, reported
+as a mean with the spread across identical runs, because **the same system
+varies by up to ten points between them**.
 
-| System | End-to-end | runs | spread | Recall@8 EN | Recall@8 ZH |
+| System | Recall@8 EN | Recall@8 ZH | End-to-end | runs | spread |
 |---|---|---|---|---|---|
-| SimpleMem | **76.3%** | 5 | 73.3–77.5 | ✗ answers, never returns turns | ✗ same |
-| Cognee — graph path | **64.3%** | 8 | 63.3–65.8 | ✗ answers, never returns turns | ✗ same |
-| *Amem, answered by a stronger model (control)* | *54.5%* | 7 | 52.5–55.8 | — same retrieval as below | — same |
-| mem0 — qdrant hybrid | 52.7% | 8 | 49.2–55.8 | **68.5%** | 49.3% |
-| **Amem** | 49.4% | 8 | 46.7–53.3 | 64.6% | **58.9%** |
-| LlamaIndex BM25 | 48.0% | 8 | 43.3–52.5 | 60.6% | 2.3% |
-| MemOS | 47.0% | 2 | 43.3–50.8 | 69.5% ✻ | — English-only run |
-| txtai — dense + BM25 | 46.6% | 3 | 43.3–48.3 | 57.6% | 61.9% |
-| Cognee — chunk path | 43.0% | 8 | 35.8–45.8 | 75.4% ✻† | — English-only run |
-| mem0 — dense, multilingual | — end-to-end not run | — | — | 58.3% | 54.6% |
-| BM25 + 5-line CJK tokenizer | — not a system, a baseline | — | — | 60.6% | 51.3% |
+| mem0 — qdrant hybrid | **68.5%** | 49.3% | 52.7% | 8 | 49.2–55.8 |
+| **Amem** | 64.6% | **58.9%** | 49.4% | 8 | 46.7–53.3 |
+| LlamaIndex BM25 | 60.6% | 2.3% | 48.0% | 8 | 43.3–52.5 |
+| MemOS | 69.5% ✻ | — English-only run | 47.0% | 2 | 43.3–50.8 |
+| txtai — dense + BM25 | 57.6% | 61.9% | 46.6% | 3 | 43.3–48.3 |
+| mem0 — dense, multilingual | 58.3% | 54.6% | — end-to-end not run | — | — |
+| BM25 + 5-line CJK tokenizer | 60.6% | 51.3% | — a baseline, not a system | — | — |
+| *Amem, answered by a stronger model* | *— same retrieval* | *— same* | *54.5%* | 7 | 52.5–55.8 |
 
 **✻** 118-question subset, not comparable with the 302-question rows. On that
 same subset Amem scores 61.9% against MemOS's 69.5%.
-**†** Not the same budget: one Cognee "result" is a twenty-turn document, so
-eight results are 160 turns against everyone else's eight.
 
-On retrieval quality **Amem is mid-field** — the two systems ahead of it both
-run an LLM at query time, which is a network round trip per question. **If that
-is what you are optimising it is not the library to pick.** The number is here
-because a comparison written by an entrant that hides the column it loses is a
+**Cognee and SimpleMem are not in this table**, though both score higher
+end-to-end — 64.3% and 76.3%. They run their own model at query time, so the
+number measures their model and their memory together, and there is no way to
+hold the model fixed across them. The control row shows how much of that is the
+model: the same Amem retrieval, answered by a stronger one, moves five points
+without a single change to what was stored. Their costs are in the table below,
+where they *are* comparable.
+
+**Amem is mid-field on retrieval.** Two rows here beat it. **If that is what
+you are optimising it is not the library to pick.** The number is here because
+a comparison written by an entrant that hides the column it loses is a
 comparison whose other columns need not be read.
 
 ### Cost
@@ -197,157 +194,136 @@ of your time.
 ### Three findings worth more than the ranking
 
 - **What predicts accuracy is whether an LLM runs at query time** — not what is
-  stored, not how it is retrieved. The two systems that run one score 64.3% and
-  76.3%; the seven that do not score 43.0% to 54.5% and cannot be separated
-  inside a ten-point spread, and that group contains pure lexical, pure dense,
-  hybrid and LLM-extraction alike. **None of the marketing built around
-  storage form shows up in the scores.**
+  stored, not how it is retrieved. The systems that run one lead; the seven that
+  do not sit between 43.0% and 54.5% and cannot be separated inside a ten-point
+  spread, and that group contains pure lexical, pure dense, hybrid and
+  LLM-extraction alike. **None of the marketing built around storage form shows
+  up in the scores.**
 - **Recall does not convert into answers.** Three separate times a system with
-  7–11 more points of recall answered no better — Amem over BM25, MemOS over
-  Amem, and Amem's own Chinese recall rising 11 points for no change at all. **The
-  metric this field reports most does not predict what a user gets.**
-- **BM25 scores 2.3% on Chinese** against 60.6% on English, and that gap is why
-  the CJK handling here exists — but most of it is a tokenizer, not this code.
-  A five-line bigram split ahead of a stock BM25 reaches 51.3%. Amem's
-  remaining 7.6 points are real and change no answers.
+  7–11 more points of recall answered no better — including Amem's own Chinese
+  recall rising 11 points for no change at all. **The metric this field reports
+  most does not predict what a user gets.**
+- **BM25 scores 2.3% on Chinese** against 60.6% on English. That gap is why the
+  CJK handling exists — but most of it is a tokenizer, not this code: a
+  five-line bigram split ahead of a stock BM25 reaches 51.3%. Amem's remaining
+  7.6 points are real and change no answers.
 
 ### Five that could not be measured
 
-Not "worse at memory" — measured against nothing, because something about each
-stopped a comparison from running. Each is a cost to whoever adopts it, so they
-are listed rather than omitted.
+Not "worse at memory" — not measured, because something stopped the comparison
+running. Each is a real cost to an adopter, so they are listed rather than left
+out.
 
 | System | What blocked it |
 |---|---|
-| **Graphiti** | Its embedded backend does not work. Ten turns through the Kuzu driver produced **2 entities and 0 edges**, and its full-text search errors out because the driver never creates the index it queries. Working as advertised needs Neo4j and a JVM alongside your application. |
-| **Zep** | Ships a client, not a library. There is no local mode: `zep-python` and `zep-cloud` are thin wrappers needing a server or a cloud key, so nothing can be evaluated offline. |
-| **Letta** | No path to load memory you already have. Memory forms only through live agent turns, so an existing history cannot be imported — no migration onto it, and no cold start from what you already know. |
-| **Memori** | Same shape: it captures by intercepting LLM calls, so memory exists only for traffic that flowed through its wrapper. A transcript cannot be handed to it. |
-| **TencentDB Agent Memory** | Three Node services and a proxy layer in front of your model's base URL. That is infrastructure, not a dependency, and it was not stood up. |
+| **Graphiti** | Its embedded backend does not work. Ten turns through the Kuzu driver built **2 entities and 0 edges**, and its full-text search errors out — the driver never creates the index it queries. Working as advertised means running Neo4j and a JVM beside your app. |
+| **Zep** | Ships a client, not a library. **No local mode**: both packages are thin wrappers needing a running server or a cloud key, so nothing can be evaluated offline. |
+| **Letta** | **No path for loading memory you already have.** Memories form only during live agent turns, so existing history cannot be imported — no migration onto it, no cold start from what you know. |
+| **Memori** | Same shape: it captures by intercepting LLM calls, so only traffic through its wrapper becomes memory. A transcript cannot be handed to it. |
+| **TencentDB Agent Memory** | Three Node services and a proxy in front of the model's base URL. That is infrastructure, not a dependency. |
 
-For Letta and Memori the limitation is about *ingestion*, not answer quality:
-bulk-loading a transcript cannot exercise a mechanism that runs during a
-conversation, and scoring them that way would repeat — in reverse — the mistake
-of scoring a knowledge graph on turn recall. What it does show is a real
-constraint on adoption: a memory you cannot load is one you cannot migrate to,
-evaluate, or seed.
-
----
+For Letta and Memori this is a limit on **how memory gets in**, not answer
+quality: testing an in-conversation mechanism with a bulk load misses what it is
+good at. But it is a real constraint on adopting either — **memory that cannot
+be loaded cannot be migrated, evaluated, or seeded.**
 
 ## The split
 
-Every entry has a `kind`, and the kind decides how it reaches a conversation.
+Every memory has a `kind`, and the kind decides how it reaches a conversation.
 
-| kind | What it holds | How it arrives |
+| kind | holds | arrives as |
 |---|---|---|
-| `user` | Who they are, how they work | **Stated in full**, every conversation |
-| `feedback` | A correction or standing instruction | **Stated in full**, every conversation |
-| `project` | A durable fact about a repo, system or decision | One line in an index; full text on request |
-| `reference` | Where something lives that you had to find | One line in an index; full text on request |
+| `user` | who the user is, how they work | **Stated in full**, every conversation |
+| `feedback` | a correction or standing instruction | **Stated in full**, every conversation |
+| `project` | a durable fact about a repo, system or decision | One line in an index; fetched in full on demand |
+| `reference` | where something you had to find lives | One line in an index; fetched in full on demand |
 
-The first two are *behavioural*. They change how the agent works and are never
-the subject of a question, so they are injected unconditionally and cost
-context on every turn whether or not they matter.
+The first two are **behavioural**: they change how the agent works and are never
+the subject of a question, so they are injected unconditionally.
 
-The last two are *lookup*. Most are irrelevant to any given conversation, so
+The last two are **lookup**: most are irrelevant to any given conversation, and
 carrying all of them everywhere costs more than fetching the occasional right
-answer. They appear as a one-line index — enough to know something was
-recorded — and the full text is retrieved on demand.
+answer. They appear as a one-line summary — enough to know the fact was
+recorded — and are fetched in full when wanted.
 
-This is the whole architecture. Everything below is what it takes to make each
-half work.
-
----
+That is the whole architecture. Everything below exists to make each half work.
 
 ## How a memory gets made
 
 ```
-  conversation ──▶ extraction ──▶ candidate queue ──▶ (a person says yes) ──▶ store
-                       │                                       │
-                   your model                             the only path in
+  conversation ──▶ extraction ──▶ candidate queue ──▶ (someone says yes) ──▶ store
+                        │                    │
+                    your model         the only way in
 ```
 
-**Extraction** runs once per session, where a summary is already being
-produced, so it costs one call rather than anything per-turn. It is given the
-tail of the conversation and asked for facts that outlive it.
+**Extraction** runs once per session, where a summary is already being made, so
+it costs one call rather than per-turn overhead. Three things about the prompt
+are worth writing down:
 
-Three things about the prompt matter enough to state:
+- **The transcript is embedded in it, not appended to it.** With the
+  conversation last, the model reads its own final turn as the live one and
+  continues it — answering the transcript, or emitting the tool call it was
+  about to make. Measured over six real sessions: **zero usable proposals**.
+  Closing the transcript and stating the task after it gives four to five each.
+- **Facts carry their date.** "On 2026-05-06 the user moved rate estimation to
+  an EWMA", not "rate estimation uses an EWMA". Entries have a `created_at`, but
+  that answers a different question — when it was *recorded*, not when it was
+  *true*.
+- **The common answer is "nothing".** The prompt says so and the model obeys: a
+  debugging session produces almost nothing, small talk none, and raising the
+  cap from five to twelve barely changes the count.
 
-- **The transcript is embedded, not appended.** With the conversation last, a
-  model reads its own final turn as the live one and continues it — answering
-  the transcript, or emitting the tool call the transcript was about to make.
-  Measured across six real sessions, that produced *zero* usable proposals
-  every time. Closing the transcript in tags and stating the task after it
-  takes the same sessions to four or five each.
-- **Facts carry their date.** "On 2026-05-06 the user moved rate estimation estimation to
-  an EWMA" rather than "rate estimation uses an EWMA". Entries have a `created_at`, but
-  that answers a different question — when it was *written down*, not when it
-  was *true*. Without the date in the sentence, a store cannot answer "when did
-  we decide this", and cannot tell a reader which of two versions is current.
-- **The common answer is nothing.** The prompt says so, and the model obeys:
-  a transcript of pure debugging yields almost nothing, small talk yields
-  nothing at all, and raising the cap from five to twelve barely moves the
-  count. It is not padding to fill a quota.
-
-**Candidates** are not memories. They sit in a queue, are shown to the agent as
-explicitly unapproved, and expire if nobody decides. `suggest()` queues;
-`keep()` commits. They are separate calls so the distinction cannot be
-collapsed into a flag.
+**A candidate is not a memory.** It sits in a queue, shown as undecided, and
+expires if nobody acts. `suggest()` queues; `keep()` commits. Two separate calls,
+so the distinction cannot be erased by a flag.
 
 **Direct writes** exist too — `store.add()` — for a fact the user stated
-outright. There is nothing to approve when the user just said it. What a model
-*inferred* goes through the queue.
-
----
+outright. What a model *inferred* goes through the queue.
 
 ## What the store looks like
 
 ```jsonl
-{"id":"4f2a…","kind":"feedback","scope":"persistent","content":"Never force-push to main.","created_at":1767225600.0,"key":"git/force-push"}
-{"id":"91c7…","kind":"project","scope":"persistent","content":"On 2026-06-03 the Windows port moved from 5494 to 8721.","created_at":1780531200.0,"key":"win/port"}
+{"id":"4f2a…","kind":"feedback","content":"Never force-push to main.","created_at":1767225600.0,"key":"git/force-push"}
+{"id":"91c7…","kind":"project","content":"From 2026-06-03 the Windows port is 8721, was 5494.","created_at":1780531200.0,"key":"win/port"}
 ```
 
-One JSON object per line, append-mostly. You can `grep` it, `git diff` it, open
-it in an editor and fix a typo, and understand what your agent knows about you
-by reading it. That is a design commitment, not a storage detail: a memory you
-cannot inspect is a memory you cannot correct.
+One JSON object per line, mostly append-only. You can `grep` it, `git diff` it,
+fix a typo in an editor, and learn what your agent recorded by reading it. That
+is a design commitment rather than a storage detail: **a memory you cannot
+inspect is a memory you cannot correct.**
 
-`key` is a short semantic handle — `namespace/slug` — that a model can read,
-group by prefix, and mistype visibly. The `id` stays the primary key because it
-is written into every stored record; the key is what a model uses to refer to
-one. Anything that accepts a handle takes a key, a full id, or an unambiguous
-id prefix.
+`key` is a short semantic handle — `namespace/slug`, in any script — that a
+model can read, group by prefix and notice a typo in. `id` stays the primary
+key; `key` is what a model uses to refer to one. Anywhere a handle is accepted,
+a key, a full id, or an unambiguous id prefix all work.
 
 The search index is a **cache**: a SQLite database beside the store, rebuilt
-whenever the file changes. Deleting it costs a rebuild and nothing else, which
-is exactly what allows the store to stay a file people edit by hand.
-
----
+when the file changes. Deleting it costs one rebuild — which is what lets the
+store stay a file a person can edit.
 
 ## How retrieval works
 
-Two mechanisms, and which one leads depends on the script of the query.
+Two mechanisms, and which leads depends on the writing system of the query.
 
-**The index** is SQLite FTS5 with a `trigram` tokenizer. The default
-`unicode61` splits on non-alphanumerics, and Chinese is written without spaces
-— a whole sentence becomes one token and every query for a phrase inside it
-misses.
+**The index** is SQLite FTS5 with the `trigram` tokenizer. The default
+`unicode61` splits on non-alphanumerics, and Chinese has no spaces — a whole
+sentence becomes one token and any query for a phrase inside it misses.
 
-**The scan** is a weighted substring pass over the entries, and it exists
-because the most meaningful unit in Chinese is two characters — 邮箱, 配置, 路径
-— which is *below* what a trigram index can hold.
+**The scan** is a weighted substring match, and it exists because the most
+meaningful unit in Chinese is two characters — 邮箱, 配置, 路径 — which is
+*below* what a trigram index can hold.
 
 Both are needed and neither is enough:
 
 ```
-query contains CJK  →  weighted scan leads, index fills remaining slots
-query is Latin only →  index leads, unchanged
+query contains an unspaced script  →  weighted scan leads, index fills the rest
+query is spaced                    →  index leads, unchanged
 ```
 
-Measured on a translated LoCoMo: for Chinese, the index alone reaches 40.1% at
-depth 8 and the weighted scan alone 58.9%. For Latin the index is the better
-ranker. Choosing per query is what lets the Chinese path improve without
-costing the English one anything.
+Measured on translated LoCoMo: for Chinese the index alone reaches 40.1% at
+depth 8 and the weighted scan alone 58.9%; for Latin the index is the better
+ranker. **Choosing per query** is what makes the Chinese gain cost the English
+path nothing.
 
 ### Why the scan is weighted
 
@@ -415,72 +391,55 @@ merges.
 ## How the store stays affordable
 
 Behavioural memory is injected whether or not it is relevant, and about eight
-thousand characters exist for all of it. That is roughly fifty short rules — or
-fourteen paragraph-length ones. Past the limit the oldest simply stop arriving,
-and **a standing instruction that stops arriving stops being followed**, with
-nothing to show it went missing.
+thousand characters exist for all of it — roughly fifty short rules, or fourteen
+paragraph-length ones. Past the limit the oldest simply stop arriving, and **a
+standing instruction that stops arriving stops being followed**, with nothing to
+show it went missing.
 
-Three mechanisms keep that from happening quietly. All three propose; none
-acts.
+Three mechanisms watch for that. All three propose; none acts.
 
-**Supersession** — a newer entry that replaced an older one. Two signals,
-because entries come in two shapes:
+**Supersession** — a newer entry that replaced an older one. Caught three ways,
+because entries come in two shapes and revisions usually announce themselves: a
+one-line rule restated more precisely shows up in sequence similarity, a
+rewritten procedure in shared vocabulary, and "改用 EWMA，不再维护 48 小时窗口"
+or "no longer uses a fixed interval" states the relationship outright. The
+announcement is the strongest of the three and needs the least shared subject.
 
-- A one-line rule restated more precisely is caught by sequence similarity.
-- A multi-step procedure rewritten is not: it keeps its subject and changes its
-  wording. That is caught by how much distinctive vocabulary the two share.
-- And a revision usually *says so* — "改用 EWMA，不再维护 48 小时窗口", "no
-  longer uses a fixed interval". That announcement is stronger evidence than either score,
-  and it needs far less shared subject to count.
+Announcing a replacement means negating what it replaces, which is what the
+negation guard refuses — so negation is checked with the announcement wording
+removed. "改用 … 不再维护 …" pairs; "always run the migration" against "never
+run the migration", which announces nothing, still does not.
 
-A wrinkle worth knowing about: announcing a replacement is normally done by
-negating what it replaces, which is exactly what the negation guard refuses.
-Negation is therefore checked with the announcement wording removed — so "改用
-… 不再维护 …" pairs, while "always run the migration" against "never run the
-migration", which announces nothing, still does not.
-
-**Dormancy** — entries whose subject has not come up in months. Note what this
+**Dormancy** — entries whose subject has not come up in months. Note what it
 does *not* measure: whether the rule was used. A rule is obeyed by *not* doing
-something, so a prohibition honoured for a year leaves exactly the trace of one
-nobody remembers. Scoring on use would retire prohibitions first — the entries
-least safe to lose and the least likely to be missed. Topicality is observable
-where compliance is not, and dormant is not wrong: it is the difference between
-a rule with work to do and one without.
+something, so a prohibition honoured for a year leaves the trace of one nobody
+remembers, and scoring on use would retire prohibitions first — the entries
+least safe to lose and least likely to be missed.
 
 **Pressure** — how much of the budget is spoken for, raised at 75% rather than
-at the limit. A signal that fires when the store overflows fires after entries
-have already stopped arriving.
+at the limit, because a signal that fires on overflow fires after entries have
+stopped arriving. Past 80% the advisory stops being something to mention when
+convenient: the softer wording was measured doing nothing at all on a real store
+that sat at 83% for weeks with the list in every session and the subject never
+once raised.
 
-Past 80% the advisory stops being something to mention when convenient. The
-softer version was measured doing nothing at all: a real store sat at 83% for
-weeks with a concrete list of pairs in every session's opening context — the
-handles and the command spelled out — and the subject was never once raised.
-"When it fits" never fits, which is this project's own thesis turning up inside
-the mechanism meant to act on it.
+That only works if the answer can be recorded, or the same pair returns forever
+and a prompt that ignores an answer teaches people to stop giving one. So there
+are two: retire the older entry, or **affirm** it — both still hold. Affirming
+settles the question as it stood; an entry written later reopens it.
 
-Raising it more insistently only works if the answer can be recorded, or the
-same pair returns next session and the one after, and a prompt that ignores an
-answer teaches people to stop giving one. So there are two answers, not one:
-retire the older entry, or **affirm** it — meaning both still hold. Affirming
-settles the question as it stood rather than granting a permanent exemption: an
-entry written later reopens it, because that is a question nobody has asked.
-
-And the answer is often affirm. A later instruction usually *adds* to an
-earlier one rather than replacing it, and what it leaves out is still required.
-On a real store the newest of three generations of one rule had dropped three
-requirements the older two carried — read the README first, take the date from
-`date` rather than from context, verify after writing. Retiring on the
-advisory's word would have removed all three silently, which is what the entry
-being retired was written to prevent. Where that holds, the fix is one merged
-entry that keeps every requirement:
+And affirm is often the right one. A later instruction usually *adds* to an
+earlier one, and what it leaves out is still required — on a real store the
+third generation of a rule had dropped three requirements the first two carried,
+and retiring on the advisory's word would have removed them silently. Where that
+holds, merge instead:
 
 ```python
 store.consolidate(merged_text, replacing=["reports/v1", "reports/v2"])
 ```
 
-which writes the merged entry before retiring the others — interrupted after
-the write leaves a visible duplicate, interrupted the other way round leaves
-the requirements gone.
+It writes before it retires: interrupted after the write leaves a visible
+duplicate, interrupted the other way leaves the requirements gone.
 
 ### Staleness is handled by dating, not by merging
 
@@ -501,40 +460,34 @@ often things change.
 
 ## What it deliberately does not do
 
-Each of these was built or measured and then rejected. The benchmarks are in
-`benchmarks/`, including the numbers where Amem loses.
+Each was built or measured and then rejected. The numbers, including the ones
+where Amem loses, are in `benchmarks/`.
 
-**No embedding model.** A dense retriever was run against this one on the same
-store, the same turns and the same judge: it scored 18.1% then 13.7% where the
-lexical path scored 14.0% then 15.3%. The ranges overlap completely and the
-ordering flipped between runs — the difference is smaller than the judge's own
-variance, for 183 MB, a 150× slower build and a 25× slower query.
+**No embedding model.** A dense retriever, same store, same turns, same judge:
+18.1% then 13.7%, against the lexical path's 14.0% then 15.3%. The ranges
+overlap and the ordering flipped between runs — the difference is smaller than
+the judge's own variance, for 183 MB, a 150× slower build and a 25× slower
+query.
 
-**No knowledge graph.** The one system that clearly leads on end-to-end
-accuracy earns it by synthesising across several facts, and that advantage is
-real. But counting the questions actually asked in one user's history, the
-share needing two or more stored facts combined is around 1%. A graph is a
-large piece of engineering for a question shape that barely occurs.
+**No knowledge graph.** Synthesising across several facts is a real advantage,
+and the systems that lead end-to-end earn it that way. But counting the
+questions actually asked in one user's history, the share needing two or more
+stored facts combined is around **1%** — a large piece of engineering for a
+question shape that barely occurs.
 
-**No per-turn automatic injection.** Retrieving on every turn and injecting the
-top three was measured: roughly **85% of what would be injected does not help**,
-and it is paid on every turn. Something relevant exists for 64% of turns, but
-retrieval finds it in only a third of those, and no lexical threshold separates
-the two — the misses are semantic, and semantics is what the previous paragraph
-rules out.
+**No per-turn automatic injection.** Measured: roughly **85% of what would be
+injected does not help**, paid on every turn. Something relevant exists for 64%
+of turns, retrieval finds it in a third of those, and no lexical threshold
+separates them — the misses are semantic, which the paragraph above rules out.
+It also costs more, for a reason visible only on the bill: writing ahead of each
+turn rewrites the prompt prefix and invalidates the cache behind it, while a
+preamble written once is reused. Over twenty turns it used half the nominal
+tokens and paid twice as much.
 
-It also costs more than the design it would replace, for a reason that only
-shows up on the bill. Writing something new ahead of each turn rewrites the
-prompt prefix and invalidates the cache behind it, while a preamble written
-once is reused by every later turn. Over twenty turns, retrieving per turn used
-half the nominal tokens and paid twice as much — 2,480 against 1,262 — and the
-gap widens as a conversation runs on.
-
-**No automatic retirement.** The machinery to detect supersession is here and
-deliberately unused for anything but proposals. Retiring a rule that still holds
-changes how an agent behaves with nothing to show it happened; leaving a stale
-one costs a line of context. The costs are not symmetric, so the decision is
-not automatic.
+**No automatic retirement.** The detection is here and proposes only. Retiring a
+rule that still holds changes how an agent behaves with nothing to show it;
+leaving a stale one costs a line of context. The costs are not symmetric, so the
+decision is not automatic.
 
 ---
 
@@ -717,29 +670,24 @@ tool, which read as authoritative and was wrong everywhere else.
 
 Every way this fails is quiet. Extraction that finds nothing looks like a
 conversation with nothing worth keeping — the common and correct answer. A
-search with no match looks like a store with no match. A preamble that was
-never rendered looks like an agent that did not need one. None of them raise,
-deliberately: a memory system must not break the thing it is attached to. The
-cost is that you cannot tell working from absent by watching.
-
-So ask:
+search with no match looks like a store with no match. Nothing raises, on
+purpose: a memory system must not break what it is attached to. The cost is that
+you cannot tell working from absent by watching.
 
 ```bash
 python -m amem check ~/.myagent/memory
 ```
 
-It answers in two halves. **Capability** is about the machine — can the index
-be built, does a probe stored in a scratch directory come back, in both a
-spaced script and an unspaced one. It touches nothing of yours. **Evidence** is
-about your store: which integration points have left a mark. A session summary
-means something calls the end-of-session hook. A queued proposal means
-extraction ran. A topical stamp means the conversation was handed back. An
-entry means somebody approved one.
+**Capability** is about the machine — the index builds, a probe written to a
+scratch directory comes back, in a spaced script and an unspaced one. It touches
+nothing of yours. **Evidence** is about your store: a session summary means
+something calls the end-of-session hook, a queued proposal means extraction ran,
+a topical stamp means the conversation was handed back, an entry means somebody
+approved one.
 
-What it will not do is guess. "Extraction found nothing" and "extraction was
-never called" produce identical stores, so it reports both readings and tells
-you the experiment that separates them — rather than picking one, which is the
-mistake the whole design exists to avoid.
+It does not guess. "Found nothing" and "never called" leave identical stores, so
+it reports both readings and names the experiment that separates them — rather
+than picking one, which is the mistake this whole design exists to avoid.
 
 ## Design commitments
 
