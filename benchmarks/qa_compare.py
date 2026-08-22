@@ -61,8 +61,8 @@ def dated_corpus():
 
 
 def ours(turns, questions):
-    from amem.entry import MemoryEntry
-    from amem.search import MemorySearchIndex
+    from carryover.entry import MemoryEntry
+    from carryover.search import MemorySearchIndex
 
     entries = [MemoryEntry(kind="project", scope="persistent", content=t) for _, t in turns]
     text = {e.id: e.content for e in entries}
@@ -97,7 +97,7 @@ def llamaindex_bm25(turns, questions):
 
 
 SYSTEMS = {
-    "Amem (FTS5 + IDF scan)": ours,
+    "Carryover (FTS5 + IDF scan)": ours,
     "txtai (稠密+BM25 混合)": txtai_hybrid,
     "LlamaIndex BM25": llamaindex_bm25,
 }

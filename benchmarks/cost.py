@@ -79,8 +79,8 @@ def _dir_bytes(path: Path) -> int:
 
 
 def ours(turns: list[str], questions: list[str]):
-    from amem.entry import MemoryEntry
-    from amem.search import MemorySearchIndex
+    from carryover.entry import MemoryEntry
+    from carryover.search import MemorySearchIndex
 
     tmp = Path(tempfile.mkdtemp())
     source = tmp / "persistent.jsonl"
@@ -160,7 +160,7 @@ def txtai_hybrid(turns: list[str], questions: list[str]):
 
 
 SYSTEMS = {
-    "Amem": ours,
+    "Carryover": ours,
     "LlamaIndex BM25": llamaindex_bm25,
     "txtai": txtai_hybrid,
 }

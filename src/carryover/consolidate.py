@@ -26,13 +26,13 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from amem.dedup import (
+from carryover.dedup import (
     MIN_LENGTH_RATIO,
     has_negation,
     normalize_content,
     numeric_tokens,
 )
-from amem.entry import MemoryEntry
+from carryover.entry import MemoryEntry
 
 #: Chosen from the measured gap, not from intuition — and it had to be, because
 #: token-level scores sit well below the character-level ones the merge

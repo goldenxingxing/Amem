@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import pytest
 
-from amem import inject
-from amem.dedup import merge_entry
-from amem.entry import MemoryEntry
-from amem.recent import SessionSummary
+from carryover import inject
+from carryover.dedup import merge_entry
+from carryover.entry import MemoryEntry
+from carryover.recent import SessionSummary
 
 
 def _entry(kind: str, content: str, key: str | None = None) -> MemoryEntry:
@@ -201,7 +201,7 @@ class TestAddressableFromWhatIsShown:
     """
 
     def _store(self, tmp_path):
-        from amem.storage import upsert_entry
+        from carryover.storage import upsert_entry
 
         path = tmp_path / "persistent.jsonl"
         entry = MemoryEntry(kind="project", scope="persistent", content="a fact")
@@ -209,19 +209,19 @@ class TestAddressableFromWhatIsShown:
         return path, entry
 
     def test_update_accepts_the_handle_the_snapshot_showed(self, tmp_path) -> None:
-        from amem.storage import update_entry
+        from carryover.storage import update_entry
 
         path, entry = self._store(tmp_path)
         assert update_entry(path, entry.handle, "revised") is not None
 
     def test_delete_accepts_the_handle_the_snapshot_showed(self, tmp_path) -> None:
-        from amem.storage import delete_entry
+        from carryover.storage import delete_entry
 
         path, entry = self._store(tmp_path)
         assert delete_entry(path, entry.handle) is True
 
     def test_a_key_also_works(self, tmp_path) -> None:
-        from amem.storage import update_entry, upsert_entry
+        from carryover.storage import update_entry, upsert_entry
 
         path = tmp_path / "persistent.jsonl"
         upsert_entry(
@@ -232,7 +232,7 @@ class TestAddressableFromWhatIsShown:
 
     def test_an_ambiguous_prefix_is_refused_rather_than_guessed(self) -> None:
         """Editing the wrong memory silently is worse than saying which matched."""
-        from amem.storage import AmbiguousHandleError, resolve_handle
+        from carryover.storage import AmbiguousHandleError, resolve_handle
 
         a = MemoryEntry(id="abcd1111" + "0" * 24, kind="project", scope="persistent", content="a")
         b = MemoryEntry(id="abcd2222" + "0" * 24, kind="project", scope="persistent", content="b")
@@ -289,7 +289,7 @@ class TestSuggestions:
     def test_suggestions_are_marked_as_undecided(self) -> None:
         """They were extracted, not approved. Reading them as fact is the one
         way this feature could do harm."""
-        from amem.candidates import MemoryCandidate
+        from carryover.candidates import MemoryCandidate
 
         out = inject.render([], [], [MemoryCandidate(kind="project", content="a guessed fact")])
 
@@ -358,7 +358,7 @@ class TestPressureWarnsWhileThereIsRoom:
         return [_entry("feedback", f"Rule {i}: " + "detail " * (size // 7)) for i in range(n)]
 
     def test_a_crowded_store_is_told_before_it_overflows(self) -> None:
-        from amem.consolidate import BEHAVIOURAL_BUDGET_CHARS, PRESSURE_WARN_AT
+        from carryover.consolidate import BEHAVIOURAL_BUDGET_CHARS, PRESSURE_WARN_AT
 
         entries = self._entries(11, 600)
         used = sum(len(e.render()) + 1 for e in entries)

@@ -80,10 +80,10 @@ def transcript(session: dict) -> str:
 
 async def run_ours(model: Model, client: httpx.AsyncClient, sessions, questions):
     """Extraction and upsert — the write path this project actually ships."""
-    from amem.entry import MemoryEntry
-    from amem.extract import EXTRACTION_PROMPT, parse_candidates
-    from amem.search import MemorySearchIndex
-    from amem.storage import read_entries, upsert_entry
+    from carryover.entry import MemoryEntry
+    from carryover.extract import EXTRACTION_PROMPT, parse_candidates
+    from carryover.search import MemorySearchIndex
+    from carryover.storage import read_entries, upsert_entry
 
     store = Path(tempfile.mkdtemp()) / "persistent.jsonl"
     for session in sessions:
@@ -190,7 +190,7 @@ async def main() -> None:
     )
 
     model = Model(6)
-    runners = {"Amem（抽取+去重合并）": run_ours}
+    runners = {"Carryover（抽取+去重合并）": run_ours}
     if os.environ.get("BENCH_SYS_PATH"):
         runners["mem0（infer=True，单遍累积）"] = run_mem0
 

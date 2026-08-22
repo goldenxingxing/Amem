@@ -17,16 +17,16 @@ from pathlib import Path
 
 import pytest
 
-import amem
-from amem.__main__ import main
-from amem.check import FAIL, OK, UNUSED, WARN, check_capability, check_evidence
+import carryover
+from carryover.__main__ import main
+from carryover.check import FAIL, OK, UNUSED, WARN, check_capability, check_evidence
 
 
 def _store(**_: object) -> Path:
     return Path(tempfile.mkdtemp())
 
 
-def _by_name(findings: list[amem.Finding]) -> dict[str, amem.Finding]:
+def _by_name(findings: list[carryover.Finding]) -> dict[str, carryover.Finding]:
     return {f.name: f for f in findings}
 
 
@@ -48,7 +48,7 @@ class TestCapability:
         assert "both scripts" in _by_name(check_capability())["retrieval"].detail
 
     def test_it_touches_nothing_of_yours(self, tmp_path: Path) -> None:
-        store = amem.Store(tmp_path)
+        store = carryover.Store(tmp_path)
         store.add("project", "a fact of mine", key="mine/one")
         before = store.path.read_text(encoding="utf-8")
 
@@ -68,8 +68,8 @@ class TestEvidence:
     def test_it_keeps_checking_past_an_empty_store(self, tmp_path: Path) -> None:
         """A newly wired host is often exactly here — extraction running, nothing
         approved yet — and stopping would hide the one line that says so."""
-        store = amem.Store(tmp_path)
-        store.suggest([amem.MemoryCandidate(kind="project", content="a guessed fact")])
+        store = carryover.Store(tmp_path)
+        store.suggest([carryover.MemoryCandidate(kind="project", content="a guessed fact")])
 
         findings = _by_name(check_evidence(tmp_path))
 
@@ -77,7 +77,7 @@ class TestEvidence:
         assert findings["extraction"].status == OK, "the evidence that matters most here"
 
     def test_an_approved_memory_is_evidence_of_approval(self, tmp_path: Path) -> None:
-        amem.Store(tmp_path).add("project", "报告写在 output/reports/", key="r/d")
+        carryover.Store(tmp_path).add("project", "报告写在 output/reports/", key="r/d")
 
         findings = _by_name(check_evidence(tmp_path))
 
@@ -85,8 +85,8 @@ class TestEvidence:
         assert "project 1" in findings["store"].detail
 
     def test_a_queued_proposal_is_evidence_extraction_ran(self, tmp_path: Path) -> None:
-        store = amem.Store(tmp_path)
-        store.suggest([amem.MemoryCandidate(kind="project", content="a guessed fact")])
+        store = carryover.Store(tmp_path)
+        store.suggest([carryover.MemoryCandidate(kind="project", content="a guessed fact")])
 
         findings = _by_name(check_evidence(tmp_path))
 
@@ -95,8 +95,8 @@ class TestEvidence:
 
     def test_an_emptied_queue_still_counts_as_having_run(self, tmp_path: Path) -> None:
         """Approved, dismissed or expired — the file having existed is the evidence."""
-        store = amem.Store(tmp_path)
-        store.suggest([amem.MemoryCandidate(kind="project", content="a guessed fact")])
+        store = carryover.Store(tmp_path)
+        store.suggest([carryover.MemoryCandidate(kind="project", content="a guessed fact")])
         store.dismiss(store.pending()[0].id)
 
         findings = _by_name(check_evidence(tmp_path))
@@ -114,7 +114,7 @@ class TestItDoesNotGuess:
     """
 
     def test_it_says_both_readings_when_nothing_was_queued(self, tmp_path: Path) -> None:
-        amem.Store(tmp_path).add("project", "written directly", key="d/1")
+        carryover.Store(tmp_path).add("project", "written directly", key="d/1")
 
         extraction = _by_name(check_evidence(tmp_path))["extraction"]
 
@@ -129,7 +129,7 @@ class TestItDoesNotGuess:
         assert "DEBUG" in extraction.remedy
 
     def test_the_same_holds_for_topical_stamps(self, tmp_path: Path) -> None:
-        amem.Store(tmp_path).add("feedback", "一条永远不会被提起的规则。")
+        carryover.Store(tmp_path).add("feedback", "一条永远不会被提起的规则。")
 
         stamps = _by_name(check_evidence(tmp_path))["topical stamps"]
 
@@ -138,7 +138,7 @@ class TestItDoesNotGuess:
 
     def test_absence_is_never_reported_as_failure(self, tmp_path: Path) -> None:
         """Only you know whether a store is new or a host is broken."""
-        amem.Store(tmp_path).add("project", "a fact")
+        carryover.Store(tmp_path).add("project", "a fact")
 
         assert [f.name for f in check_evidence(tmp_path) if f.status == FAIL] == []
 
@@ -147,7 +147,7 @@ class TestTheLoudCases:
     """Where the check does know enough to raise its voice."""
 
     def _crowded(self, tmp_path: Path, count: int) -> Path:
-        store = amem.Store(tmp_path)
+        store = carryover.Store(tmp_path)
         for i in range(count):
             store.add("feedback", f"Standing rule {i}: never {'ab cd ef gh ij kl' * 12} {i}.")
         return tmp_path
@@ -165,14 +165,14 @@ class TestTheLoudCases:
         assert "not reaching conversations" in budget.remedy
 
     def test_an_unanswered_supersession_is_raised(self, tmp_path: Path) -> None:
-        store = amem.Store(tmp_path)
+        store = carryover.Store(tmp_path)
         older = store.add("feedback", "截至 2026-03-04，上报失败采用固定间隔重试。").entry
-        newer = amem.MemoryEntry(
+        newer = carryover.MemoryEntry(
             kind="feedback",
             content="截至 2026-04-02，上报失败已改为指数退避，不再使用固定间隔重试。",
         )
         newer.created_at = older.created_at + 1
-        from amem.storage import upsert_entry
+        from carryover.storage import upsert_entry
 
         upsert_entry(store.path, newer, dedup=False)
 
@@ -191,7 +191,7 @@ class TestTheCommandLine:
     def test_it_accepts_the_check_word_a_reader_would_type(
         self, capsys: pytest.CaptureFixture[str], tmp_path: Path
     ) -> None:
-        amem.Store(tmp_path).add("project", "a fact")
+        carryover.Store(tmp_path).add("project", "a fact")
 
         assert main(["check", str(tmp_path)]) == 0
 

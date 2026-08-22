@@ -29,8 +29,8 @@ from _prereq import require_data
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from amem.entry import MemoryEntry
-from amem.search import MemorySearchIndex
+from carryover.entry import MemoryEntry
+from carryover.search import MemorySearchIndex
 
 DATA = Path(__file__).with_name(os.environ.get("BENCH_DATA", "locomo10.json"))
 """Download: https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json"""

@@ -1,6 +1,6 @@
 """The operations an agent can perform on a store, as data.
 
-:func:`amem.render` tells an agent to search the store, read an entry in full,
+:func:`carryover.render` tells an agent to search the store, read an entry in full,
 keep or drop a proposal, retire an entry or affirm it. Until this module those
 were things the preamble described and the package could not do: every host had
 to define the same vocabulary, validate it, and dispatch it to methods that
@@ -13,7 +13,7 @@ how to render the result, what to log.
 
 Operations are models rather than a function per verb because they arrive as
 data — a tool call, a JSON line, a form — and validating them at the boundary is
-the same reason :mod:`amem.entry` is a model. ``writes`` is on the operation
+the same reason :mod:`carryover.entry` is a model. ``writes`` is on the operation
 rather than left to the host to enumerate: a host gating writes should not have
 to keep its own list in step with this one.
 
@@ -29,11 +29,11 @@ from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
-from amem.candidates import MemoryCandidate
-from amem.entry import MemoryEntry, MemoryKind
-from amem.recent import SessionSummary
-from amem.search import SearchHit
-from amem.store import Store
+from carryover.candidates import MemoryCandidate
+from carryover.entry import MemoryEntry, MemoryKind
+from carryover.recent import SessionSummary
+from carryover.search import SearchHit
+from carryover.store import Store
 
 
 class _Operation(BaseModel):

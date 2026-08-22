@@ -16,8 +16,8 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
-from amem.candidates import MemoryCandidate
-from amem.consolidate import (
+from carryover.candidates import MemoryCandidate
+from carryover.consolidate import (
     BEHAVIOURAL_BUDGET_CHARS,
     PRESSURE_ACT_AT,
     PRESSURE_WARN_AT,
@@ -25,8 +25,8 @@ from amem.consolidate import (
     find_superseded,
     pressure,
 )
-from amem.entry import MemoryEntry
-from amem.recent import SessionSummary
+from carryover.entry import MemoryEntry
+from carryover.recent import SessionSummary
 
 INJECTION_TYPE = "cross_session_memory"
 
@@ -120,8 +120,8 @@ class Actions:
     that application and silently wrong in every other host, telling an agent to
     call something that does not exist.
 
-    The defaults are the operations in :mod:`amem.operations`, which this
-    package can perform: a host that passes them through :func:`amem.execute`
+    The defaults are the operations in :mod:`carryover.operations`, which this
+    package can perform: a host that passes them through :func:`carryover.execute`
     needs no override at all. Overriding is for a host whose agent reaches them
     through a tool of its own — the wording changes, the operations do not.
     """

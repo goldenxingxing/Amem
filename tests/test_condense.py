@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from amem.condense import (
+from carryover.condense import (
     CROSS_SESSION_SECTIONS,
     DROPPED_SECTIONS,
     condense_summary,

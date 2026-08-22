@@ -85,8 +85,8 @@ def score(ranked, gold):
 
 
 def ours(turns, questions):
-    from amem.entry import MemoryEntry
-    from amem.search import MemorySearchIndex
+    from carryover.entry import MemoryEntry
+    from carryover.search import MemorySearchIndex
 
     entries = [MemoryEntry(kind="project", scope="persistent", content=t) for _, t in turns]
     dia = {e.id: d for e, (d, _) in zip(entries, turns, strict=True)}
@@ -116,7 +116,7 @@ def main():
     require_data(DATA)
     data = list(corpus())
     systems = {
-        "Amem (653 lines, no dependencies)": ours,
+        "Carryover (653 lines, no dependencies)": ours,
         "LlamaIndex BM25 (as shipped)": lambda t, q: llama_bm25(t, q),
         "LlamaIndex BM25 + a five-line CJK bigram split": lambda t, q: llama_bm25(
             t, q, prepare=bigrammed

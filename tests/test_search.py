@@ -12,9 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from amem import search
-from amem.entry import MemoryEntry
-from amem.search import MemorySearchIndex
+from carryover import search
+from carryover.entry import MemoryEntry
+from carryover.search import MemorySearchIndex
 
 
 def _entries(*bodies: str) -> list[MemoryEntry]:
@@ -359,7 +359,7 @@ class TestTheIndexIsNotAlwaysAvailable:
         monkeypatch.setattr(search.sqlite3, "connect", self._without("trigram"))
 
         index = search.MemorySearchIndex(tmp_path / "db", source)
-        with caplog.at_level(logging.WARNING, logger="amem"):
+        with caplog.at_level(logging.WARNING, logger="carryover"):
             for _ in range(3):
                 index.search("where do daily reports live", entries, limit=8)
 

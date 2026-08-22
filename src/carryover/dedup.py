@@ -30,13 +30,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from amem.entry import MemoryEntry, MemoryKind
-from amem.text import fold_text
+from carryover.entry import MemoryEntry, MemoryKind
+from carryover.text import fold_text
 
 if TYPE_CHECKING:
     # recent.py imports this module for its own dedup, so the summary model can
     # only be referenced as a type here.
-    from amem.recent import SessionSummary
+    from carryover.recent import SessionSummary
 
 # Ratio at or above which a near-identical entry is merged, provided the guards
 # also pass. Normalization has already removed case, width, and whitespace, so

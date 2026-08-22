@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from amem.candidates import (
+from carryover.candidates import (
     CANDIDATE_TTL_SECONDS,
     MAX_CANDIDATES,
     CandidateFile,

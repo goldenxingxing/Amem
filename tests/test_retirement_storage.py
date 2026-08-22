@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from amem.entry import MemoryEntry
-from amem.storage import (
+from carryover.entry import MemoryEntry
+from carryover.storage import (
     read_entries,
     resolve_handle,
     set_retired,

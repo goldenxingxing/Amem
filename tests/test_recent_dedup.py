@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from amem.recent import (
+from carryover.recent import (
     DEFAULT_MAX_SUMMARIES,
     SessionSummary,
     SummaryTrigger,
@@ -172,7 +172,7 @@ def test_appending_does_not_get_more_expensive_as_summaries_get_longer(
     So the property is asserted directly and without a clock: quadruple the
     length of every summary and the number of comparisons must not move.
     """
-    from amem import dedup
+    from carryover import dedup
 
     def cost_at(multiplier: int) -> tuple[int, int]:
         calls = 0

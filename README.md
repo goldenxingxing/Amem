@@ -1,11 +1,11 @@
 [English](README.md) | [中文](README.zh-CN.md) · [How it works](DESIGN.md)
 
-# Amem
+# Carryover
 
 Cross-session memory for agents. Two text files and the standard
 library.
 
-Amem keeps what an agent learns about the person it works with, carries the
+Carryover keeps what an agent learns about the person it works with, brings the
 standing parts into every later conversation without being asked, and lets the
 rest be searched. It is a library, not a service: no daemon, no vector
 database, no embedding model, nothing to install beyond Python.
@@ -47,9 +47,9 @@ in [`benchmarks/README.md`](benchmarks/README.md).
 Blank cells are marked with why they are blank:
 **✗** the system's design prevents the measurement · **—** not run.
 
-### Where Amem wins outright
+### Where Carryover wins outright
 
-| Dimension | **Amem** | Best of the rest | The gap |
+| Dimension | **Carryover** | Best of the rest | The gap |
 |---|---|---|---|
 | Install footprint | **nothing beyond the stdlib** | 360 MB dependency tree (mem0) | the others are 0.97–1.4 GB environments |
 | Build over 788 turns | **0.0 s** | 0.1 s (BM25, entirely in memory) | Cognee ~20 min, SimpleMem ~2 hours |
@@ -78,23 +78,23 @@ system varies by up to ten points between them.
 | Cognee — chunk path | 75.4% ✻† | — English-only run | — see below | — | — |
 | MemOS | 69.5% ✻ | — English-only run | 47.0% | 2 | 43.3–50.8 |
 | mem0 — qdrant hybrid | **68.5%** | 49.3% | 52.7% | 8 | 49.2–55.8 |
-| **Amem** | 64.6% | **58.9%** | 49.4% | 8 | 46.7–53.3 |
+| **Carryover** | 64.6% | **58.9%** | 49.4% | 8 | 46.7–53.3 |
 | LlamaIndex BM25 | 60.6% | 2.3% | 48.0% | 8 | 43.3–52.5 |
 | BM25 + 5-line CJK tokenizer | 60.6% | 51.3% | — a baseline, not a system | — | — |
 | mem0 — dense, multilingual | 58.3% | 54.6% | — end-to-end not run | — | — |
 | txtai — dense + BM25 | 57.6% | 61.9% | 46.6% | 3 | 43.3–48.3 |
 | SimpleMem | ✗ answers, never returns turns | ✗ same | — see below | — | — |
-| *Amem, answered by a stronger model* | *— same retrieval* | *— same* | *54.5%* | 7 | 52.5–55.8 |
+| *Carryover, answered by a stronger model* | *— same retrieval* | *— same* | *54.5%* | 7 | 52.5–55.8 |
 
 **✻** 118-question subset, not comparable with the 302-question rows. On that
-same subset Amem scores 61.9% against MemOS's 69.5%.
+same subset Carryover scores 61.9% against MemOS's 69.5%.
 **†** Not the same budget: one Cognee "result" is a twenty-turn document, so
 eight results are 160 turns against everyone else's eight.
 
 **Cognee and SimpleMem have no end-to-end figure here.** They run their own
 model at query time, so the number measures their model and their memory
 together, and there is no way to hold the model fixed across them. The control
-row shows how much of that is the model: the same Amem retrieval, answered by a
+row shows how much of that is the model: the same Carryover retrieval, answered by a
 stronger one, moves five points without a single change to what was stored.
 Their costs are in the table below, where they are comparable.
 
@@ -104,7 +104,7 @@ Their costs are in the table below, where they are comparable.
 
 | System | Build | Query, median | Index on disk | Add one memory, search again | Install |
 |---|---|---|---|---|---|
-| **Amem** | **0.0 s** | 0.5 ms | 1.0 MB | **1.7 ms** | **0 beyond stdlib** |
+| **Carryover** | **0.0 s** | 0.5 ms | 1.0 MB | **1.7 ms** | **0 beyond stdlib** |
 | LlamaIndex BM25 | 0.1 s | **0.1 ms** | 0.7 MB | ✗ full rebuild — index is in memory | ~970 MB env |
 | txtai | 1.5 s | 8.5 ms | 2.0 MB | ✗ full rebuild — index is in memory | ~970 MB env |
 | mem0 (extraction off) | 30.5 s | 39.5 ms | 3.7 MB | — not run; qdrant writes incrementally, so no rebuild is expected | 360 MB tree |
@@ -122,7 +122,7 @@ about the network.
 the two fastest retrievers**, because they hold their index in memory. Memory
 is accumulated one entry at a time, so that path runs far more often than any
 retrieval. Recorded in the other direction too: BM25 answers a query five times
-faster than Amem, and both are far below anything perceptible.
+faster than Carryover, and both are far below anything perceptible.
 
 ### Token cost per conversation
 
@@ -132,7 +132,7 @@ provider returns, against a floor of the same conversation with no memory.
 | Strategy | Prompt tokens | Of which cached | **Paid** | Over floor |
 |---|---|---|---|---|
 | No memory (floor) | 5,566 | 5,426 | 140 | n/a — this is the floor |
-| **Amem — preamble written once** | 45,726 | 44,464 | **1,262** | +1,122 |
+| **Carryover — preamble written once** | 45,726 | 44,464 | **1,262** | +1,122 |
 | Retrieve and inject per turn | 21,191 | 18,711 | **2,480** | +2,340 |
 
 By nominal tokens the preamble costs 2.2× more. By what is charged it costs
@@ -152,7 +152,7 @@ consolidation with single-pass accumulation.
 
 | System | Returns current value | Returns superseded | Both, unmarked | Unchanged rules kept |
 |---|---|---|---|---|
-| **Amem** | **6/6** | 0 | 0 | **3/3** |
+| **Carryover** | **6/6** | 0 | 0 | **3/3** |
 | mem0 (`infer=True`) | 4/6 | 1 | 1 | 1/3 |
 | txtai · LlamaIndex BM25 | ✗ retrievers, not memory — no notion of a fact being replaced | | | |
 | Cognee · MemOS · SimpleMem | — not run | | | |
@@ -161,21 +161,21 @@ The last column matters more than the first: **of three never-revised rules,
 mem0 kept one**. A standing instruction that stops arriving is a standing
 instruction that stops being followed, and **nothing indicates that it went**.
 
-**And Amem does not win this with the mechanism built for it**: deduplication fired
+**And Carryover does not win this with the mechanism built for it**: deduplication fired
 zero times and by design cannot, since differing numbers are a veto and 5494
 against 8721 is exactly that shape. What carries it is that every entry states
 its date, so both versions sit in the store and a reader can order them.
 
 ### Properties no benchmark scores
 
-| | Amem | mem0 | Cognee | MemOS | SimpleMem | txtai · BM25 |
+| | Carryover | mem0 | Cognee | MemOS | SimpleMem | txtai · BM25 |
 |---|---|---|---|---|---|---|
 | Writes need a person's approval | **yes** | no | no | no | no | n/a |
 | Store is plain text you can edit | **yes** | no — vector db | no | no | no — lancedb | no |
 | Runs with no service or model | **yes** | needs an embedder | needs an LLM | needs an embedder | needs an LLM | needs an embedder |
 | Memory arrives without being asked | **yes** | no | no | no | no | no |
 
-**One column is yes on all four rows.** The last one especially is why Amem
+**One column is yes on all four rows.** The last one especially is why Carryover
 exists: every other system here is query-driven — ask and it finds. "Never put function names in the external docs" is not something
 anyone asks for, and on 243 real turns **89% were instructions** where nothing
 is queried at all. A memory that only works when asked is not working for 89%
@@ -285,7 +285,7 @@ decision is not automatic.
 Python 3.11 or newer. One dependency, which pip will fetch:
 
 ```bash
-pip install git+https://github.com/goldenxingxing/Amem
+pip install git+https://github.com/goldenxingxing/carryover
 ```
 
 Not on PyPI yet: the name is reserved, but nothing is published while the API
@@ -300,31 +300,35 @@ against a fresh install and run, and it is twenty-three lines because the
 package does the rest.
 
 ```python
-import amem
+import carryover
 
-store = amem.Store("~/.myagent/memory")          # your path; `~` is expanded
+store = carryover.Store("~/.myagent/memory")  # your path; `~` is expanded
+
 
 # 1. Opening the conversation. No query — what the agent most needs to know
 #    is what nobody would think to ask for.
 def opening_context() -> str:
-    return amem.render(store.entries(), store.recent(), store.pending())
+    return carryover.render(store.entries(), store.recent(), store.pending())
+
 
 # 2. One tool. The operations are validated data, and executing them is
 #    included; what stays yours is whether to ask first.
 async def memory_tool(payload: dict) -> str:
     try:
-        op = amem.parse_operation(payload)
-    except amem.UnknownOperation as exc:
-        return f"error: {exc}"                    # names the real operations
+        op = carryover.parse_operation(payload)
+    except carryover.UnknownOperation as exc:
+        return f"error: {exc}"  # names the real operations
     if op.writes and not await ask_the_user(op.describe()):
         return "declined"
-    return amem.execute(store, op).model_dump_json(exclude_defaults=True)
+    return carryover.execute(store, op).model_dump_json(exclude_defaults=True)
+
 
 # 3. Ending it. Extraction notices; a person decides.
 async def on_session_end(transcript: str, complete) -> None:
-    store.suggest(await amem.propose(complete, transcript))
-    store.note_topics(transcript)                 # feeds the dormancy ranking
+    store.suggest(await carryover.propose(complete, transcript))
+    store.note_topics(transcript)  # feeds the dormancy ranking
     append_summary(store.directory / "recent.jsonl", summary_of(transcript))
+
 
 # 4. Whatever your approval is. A dialog, a CLI prompt, a policy — this
 #    package has no opinion, and no way to answer for you.
@@ -358,7 +362,7 @@ tells it what to call, so the wording has to name something that exists in your
 host:
 
 ```python
-amem.render(entries, recent, pending, actions=amem.Actions(
+carryover.render(entries, recent, pending, actions=carryover.Actions(
     search='`Memory({"op": "search", "query": "<query>"})`',
     promote='`Memory({"op": "promote", "id": "<id>"})`',
     ...
@@ -373,8 +377,8 @@ Doing it without the operation layer is the same call:
 ```python
 store.add("project", "Reports go in output/reports/daily/.", key="reports/daily")
 store.search("where do daily reports go")
-store.get("reports/daily")                # by key, id, or unambiguous id prefix
-store.keep(candidate_id)                  # only after someone said yes
+store.get("reports/daily")  # by key, id, or unambiguous id prefix
+store.keep(candidate_id)  # only after someone said yes
 ```
 
 ### Keeping it affordable
@@ -384,13 +388,13 @@ The store fills and entries stop being true. None of this acts on its own — se
 one means:
 
 ```python
-fit, held = amem.pressure(store.entries(), amem.BEHAVIOURAL_BUDGET_CHARS)
-amem.find_superseded(store.entries())     # a newer entry that replaced an older
-amem.find_dormant(store.entries(), now=time.time())
+fit, held = carryover.pressure(store.entries(), carryover.BEHAVIOURAL_BUDGET_CHARS)
+carryover.find_superseded(store.entries())  # a newer entry that replaced an older
+carryover.find_dormant(store.entries(), now=time.time())
 
-store.affirm("reports/daily")             # raised, and it still holds
+store.affirm("reports/daily")  # raised, and it still holds
 store.consolidate(merged, replacing=["reports/v1", "reports/v2"])
-store.retire("api/version")               # out of the preamble, still in the file
+store.retire("api/version")  # out of the preamble, still in the file
 ```
 
 Prefer `consolidate` over `retire` when a later entry restates an earlier one.
@@ -401,8 +405,8 @@ Two things default to this process, which is right on a desktop and arbitrary
 in a request handler:
 
 ```python
-await amem.propose(complete, transcript, today=user_local_date)
-await amem.propose(complete, transcript, prompt=your_own_template)
+await carryover.propose(complete, transcript, today=user_local_date)
+await carryover.propose(complete, transcript, prompt=your_own_template)
 ```
 
 `today` is what the model resolves "last Tuesday" against, and it is written
@@ -425,7 +429,7 @@ reviewer can see them:
 ```python
 for candidate in await propose(complete, transcript):
     store.suggest([candidate])
-    store.keep(candidate.id)          # unattended: no one is going to be asked
+    store.keep(candidate.id)  # unattended: no one is going to be asked
 ```
 
 As a default it would be the behaviour of everyone who never looked, and the
@@ -444,7 +448,7 @@ purpose: a memory system must not break what it is attached to. The cost is that
 you cannot tell working from absent by watching.
 
 ```bash
-python -m amem check ~/.myagent/memory
+python -m carryover check ~/.myagent/memory
 ```
 
 **Capability** is about the machine — the index builds, a probe written to a
@@ -460,7 +464,7 @@ than picking one, which is the mistake this whole design exists to avoid.
 
 ## Design commitments
 
-Constraints, not preferences. Each is something Amem will give up performance
+Constraints, not preferences. Each is something Carryover will give up performance
 for.
 
 | | |
@@ -469,4 +473,4 @@ for.
 | **The store is a text file** | Greppable, diffable, editable, versionable. The index is a cache that rebuilds. |
 | **Nothing is written without approval** | Extraction produces candidates. Candidates are proposals. |
 | **Nothing is destroyed** | Superseded entries are retired: out of the injected set, still in the file, still searchable, restorable. |
-| **The model is yours** | Amem never imports an LLM client. A test asserts it. |
+| **The model is yours** | Carryover never imports an LLM client. A test asserts it. |

@@ -1,6 +1,6 @@
 # Benchmarks
 
-What Amem costs and how well it works, measured rather than claimed — including
+What Carryover costs and how well it works, measured rather than claimed — including
 where it loses.
 
 Every figure here is from a run whose script is in this directory. Where a
@@ -24,24 +24,24 @@ the answer, and **end-to-end accuracy** asks whether the question got answered.
 |---|---|---|---|---|
 | SimpleMem (planning + reflection at query time) | **76.3%** | 5 | N/A | N/A |
 | Cognee (graph, answers from extracted structure) | **64.3%** | 8 | N/A | N/A |
-| *Amem, answered by the stronger model (control)* | *54.5%* | 7 | — | — |
+| *Carryover, answered by the stronger model (control)* | *54.5%* | 7 | — | — |
 | mem0 (qdrant hybrid) | 52.7% | 8 | **68.5%** | 49.3% |
-| **Amem** | 49.4% | 8 | 64.6% | **58.9%** |
+| **Carryover** | 49.4% | 8 | 64.6% | **58.9%** |
 | LlamaIndex BM25 | 48.0% | 8 | 60.6% | 2.3% |
 | MemOS | 47.0% | 2 | 69.5% ✻ | — |
 | txtai (dense + BM25) | 46.6% | 3 | 57.6% | 61.9% |
 | Cognee (returning raw chunks) | 43.0% | 8 | 75.4% ✻† | — |
 
 **✻** From a 118-question subset, not comparable with the 302-question rows.
-On the same subset Amem scores 61.9% against MemOS's 69.5%.
+On the same subset Carryover scores 61.9% against MemOS's 69.5%.
 **†** Not the same budget: one Cognee "result" is a twenty-turn document, so
 eight results are 160 turns against everyone else's eight.
 
 The README carries a shorter version of this table, for choosing. This is the
-full one: nothing that was measured is left out of it, including the rows Amem
+full one: nothing that was measured is left out of it, including the rows Carryover
 loses.
 
-**Amem comes mid-field, and the honest summary is that it is not the retriever
+**Carryover comes mid-field, and the honest summary is that it is not the retriever
 to pick if retrieval quality is what you are optimising.** Three things are
 worth taking from the table beyond the ranking.
 
@@ -51,15 +51,15 @@ score 64.3% and 76.3%; the seven that do not score 43.0% to 54.5% and cannot be
 told apart inside a ten-point spread — and that group contains pure lexical,
 pure dense, hybrid, and LLM-extraction alike.
 
-**Recall does not convert.** Three independent observations: raising Amem's
-Chinese recall by 11 points moved end-to-end accuracy not at all; Amem beats
-the best BM25 by 7.6 points of recall and ties it on answers; MemOS beats Amem
+**Recall does not convert.** Three independent observations: raising Carryover's
+Chinese recall by 11 points moved end-to-end accuracy not at all; Carryover beats
+the best BM25 by 7.6 points of recall and ties it on answers; MemOS beats Carryover
 by 7.6 points of recall and answers no better.
 
 **BM25 collapses on Chinese** — 60.6% English, 2.3% Chinese — and that gap is
 the entire reason the CJK handling here exists. But most of it is a tokenizer,
 not this code: a five-line bigram split ahead of a stock BM25 reaches 51.3%.
-Amem's remaining 7.6 points over that are real and do not change any answers.
+Carryover's remaining 7.6 points over that are real and do not change any answers.
 
 ### Cost
 
@@ -67,7 +67,7 @@ Amem's remaining 7.6 points over that are real and do not change any answers.
 
 | System | Build | Query (median) | Index on disk | Write then search | Install |
 |---|---|---|---|---|---|
-| **Amem** | **0.0 s** | 0.5 ms | 1.0 MB | **1.7 ms** | **0** |
+| **Carryover** | **0.0 s** | 0.5 ms | 1.0 MB | **1.7 ms** | **0** |
 | LlamaIndex BM25 | 0.1 s | **0.1 ms** | 0.7 MB | full rebuild | ~970 MB env |
 | txtai | 1.5 s | 8.5 ms | 2.0 MB | full rebuild | ~970 MB env |
 | mem0 (extraction off) | 30.5 s | 39.5 ms | 3.7 MB | — | 360 MB tree |
@@ -84,7 +84,7 @@ accumulated one entry at a time, so that path runs far more often than any
 retrieval.
 
 Recorded in the other direction too: BM25 answers a query five times faster
-than Amem does, and both are far below anything perceptible.
+than Carryover does, and both are far below anything perceptible.
 
 ### Staleness (`incremental.py`)
 
@@ -98,14 +98,14 @@ for the current value:
 
 | System | Current | Stale | Both, unmarked | Unchanged facts kept |
 |---|---|---|---|---|
-| **Amem** | **6/6** | 0 | 0 | **3/3** |
+| **Carryover** | **6/6** | 0 | 0 | **3/3** |
 | mem0 (`infer=True`) | 4/6 | 1 | 1 | 1/3 |
 
 mem0 returned the superseded solver for one, handed back both values without
 saying which was current for another, and lost two of the three standing
 instructions that never changed.
 
-**Amem does not win this with the mechanism built for it.** Deduplication fired
+**Carryover does not win this with the mechanism built for it.** Deduplication fired
 zero times and by design cannot fire here — differing numbers are a veto, and
 5494 against 8721 is exactly that shape. What carries it is that every entry
 states its date, so both versions sit in the store and a reader can order them.
@@ -136,14 +136,14 @@ systems.
 mem0 with the chroma store its docs recommend **silently disables its own
 hybrid retrieval** — English fell from 68.5% to 58.3%. And the first Chinese
 run used an English-only embedding model plus mem0's default 0.1 relevance
-threshold, which scored it 11.6% and produced a published claim that Amem led
+threshold, which scored it 11.6% and produced a published claim that Carryover led
 Chinese by 37 points. Corrected, it trails.
 
 A third nearly went the other way: LlamaIndex's `BM25Retriever` accepts a
 `tokenizer`, warns that it is deprecated, and ignores it. Passing a CJK
 tokenizer returned results identical to the default, digit for digit — which
 reads as "a Chinese tokenizer does not help BM25", a conclusion that happened
-to flatter Amem. It was caught only because the numbers matched too exactly.
+to flatter Carryover. It was caught only because the numbers matched too exactly.
 
 **Every one of these errors pointed the same way.** That is not chance: a
 number stops being checked when it is pleasant. The reproduction instructions
@@ -160,7 +160,7 @@ silence.
 Two designs spend tokens in opposite places, so the comparison has to be fair
 to both:
 
-- **Amem** pays once, at the start. Behavioural memory arrives in full whether
+- **Carryover** pays once, at the start. Behavioural memory arrives in full whether
   or not it is relevant. Nothing is spent per turn.
 - **Query-driven memory** pays per turn. Nothing arrives uninvited; each turn
   injects whatever a retrieval returned.
@@ -172,10 +172,10 @@ not estimated with a tokenizer that is not the one being billed.
 | Strategy | Prompt tokens | Of which cached | **Paid** | Over floor | Per turn |
 |---|---|---|---|---|---|
 | No memory (floor) | 5,566 | 5,426 | 140 | — | — |
-| **Amem** (preamble once) | 45,726 | 44,464 | **1,262** | +1,122 | 56 |
+| **Carryover** (preamble once) | 45,726 | 44,464 | **1,262** | +1,122 | 56 |
 | Query-driven (retrieve per turn) | 21,191 | 18,711 | **2,480** | +2,340 | 117 |
 
-**By nominal tokens Amem costs 2.2× more. By what is actually charged it costs
+**By nominal tokens Carryover costs 2.2× more. By what is actually charged it costs
 half as much.**
 
 The difference is prompt prefix caching, and the two designs differ in exactly
@@ -187,7 +187,7 @@ pays twice as much.
 
 And the gap widens with the conversation:
 
-| Turn | Amem (paid) | Query-driven (paid) |
+| Turn | Carryover (paid) | Query-driven (paid) |
 |---|---|---|
 | 5 | 389 | 492 |
 | 10 | 652 | 1,010 |
@@ -198,7 +198,7 @@ And the gap widens with the conversation:
 Both were produced, believed briefly, and are recorded because the shape
 repeats.
 
-**Counting only `prompt_tokens`** gave "Amem costs 2.3× more" — charging both
+**Counting only `prompt_tokens`** gave "Carryover costs 2.3× more" — charging both
 strategies full price for tokens one of them gets at a discount, on the axis
 where they differ most.
 
@@ -244,7 +244,7 @@ ground truth survives it, and everything but the language is held fixed.
 - **BM25 scores 2.3% on Chinese** against 60.6% on English. That gap is why the
   CJK handling exists, and most of it is a tokenizer rather than any one
   implementation: a five-line bigram split ahead of a stock BM25 already reaches
-  51.3%, with Amem 7.6 points above that.
+  51.3%, with Carryover 7.6 points above that.
 
 ### Environment
 

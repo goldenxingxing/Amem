@@ -12,10 +12,10 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from amem._log import logger
-from amem.condense import condense_summary
-from amem.dedup import SummaryPolicy, compact_summaries, place_summary
-from amem.storage import _locked
+from carryover._log import logger
+from carryover.condense import condense_summary
+from carryover.dedup import SummaryPolicy, compact_summaries, place_summary
+from carryover.storage import _locked
 
 RECENT_FILENAME = "recent.jsonl"
 
@@ -47,7 +47,7 @@ class SessionSummary(BaseModel):
 
         Condensed rather than verbatim: the stored text is a handover written
         for the session being compacted, and most of it — file states, absolute
-        paths — is noise to anyone else. See :mod:`amem.condense`.
+        paths — is noise to anyone else. See :mod:`carryover.condense`.
         The full text stays on disk; only what is shown is reduced.
         """
         ts = time.strftime("%Y-%m-%d %H:%M", time.localtime(self.created_at))

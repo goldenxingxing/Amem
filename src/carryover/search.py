@@ -26,8 +26,8 @@ from dataclasses import dataclass
 from itertools import zip_longest
 from pathlib import Path
 
-from amem._log import logger
-from amem.entry import MemoryEntry
+from carryover._log import logger
+from carryover.entry import MemoryEntry
 
 #: Below this, FTS5 cannot help: a trigram index has nothing to match on. Two
 #: characters is a whole word in Chinese ("邮箱", "配置"), so those queries fall

@@ -1,10 +1,10 @@
 [English](README.md) | [中文](README.zh-CN.md) · [它怎么工作](DESIGN.zh-CN.md)
 
-# Amem
+# Carryover
 
 给 agent 用的跨会话记忆。两个文本文件加标准库。
 
-Amem 记住 agent 对它服务的那个人学到的东西，把其中该常驻的部分不问自动带进每一次后续对话，其余的留给检索。它是一个库，不是一个服务：没有守护进程，没有向量数据库，没有嵌入模型，除了 Python 本身什么都不用装。
+Carryover 记住 agent 对它服务的那个人学到的东西，把其中该常驻的部分不问自动带进每一次后续对话，其余的留给检索。它是一个库，不是一个服务：没有守护进程，没有向量数据库，没有嵌入模型，除了 Python 本身什么都不用装。
 
 里面没有任何东西绑定某个领域。下面的例子来自一个编码助手，因为它是在那里长出来的；而再往下那份对比测的是 LoCoMo —— 两个人聊各自的家人和这一周。
 
@@ -18,7 +18,7 @@ Amem 记住 agent 对它服务的那个人学到的东西，把其中该常驻�
 
 **总得有人决定记什么。** 抽取可以注意到一个事实，但它不该能写下一个。这个领域里其余的库都是静默写入的：你只有事后去翻，才知道它记了你什么。
 
-Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"分开，而且**没有人点头，什么都进不了库**。
+Carryover 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"分开，而且**没有人点头，什么都进不了库**。
 
 ## 和开源方案的对比
 
@@ -26,9 +26,9 @@ Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"�
 
 空格都标了原因：**✗** 该系统的设计使这项测量无法进行 · **—** 没有跑。
 
-### Amem 明确领先的地方
+### Carryover 明确领先的地方
 
-| 维度 | **Amem** | 其他方案里最好的 | 差距 |
+| 维度 | **Carryover** | 其他方案里最好的 | 差距 |
 |---|---|---|---|
 | 安装体积 | **除标准库外为 0** | 360 MB 依赖树(mem0) | 其余的是 0.97–1.4 GB 环境 |
 | 建库 788 轮 | **0.0 秒** | 0.1 秒（BM25，纯内存） | Cognee 约 20 分钟，SimpleMem 约 2 小时 |
@@ -52,18 +52,18 @@ Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"�
 | Cognee — 取回原文块 | 75.4% ✻† | — 只跑了英文 | — 见下 | — | — |
 | MemOS | 69.5% ✻ | — 只跑了英文 | 47.0% | 2 | 43.3–50.8 |
 | mem0 — qdrant 混合 | **68.5%** | 49.3% | 52.7% | 8 | 49.2–55.8 |
-| **Amem** | 64.6% | **58.9%** | 49.4% | 8 | 46.7–53.3 |
+| **Carryover** | 64.6% | **58.9%** | 49.4% | 8 | 46.7–53.3 |
 | LlamaIndex BM25 | 60.6% | 2.3% | 48.0% | 8 | 43.3–52.5 |
 | BM25 + 五行中文分词 | 60.6% | 51.3% | — 这是基线不是系统 | — | — |
 | mem0 — 纯向量，多语言 | 58.3% | 54.6% | — 端到端没跑 | — | — |
 | txtai — 稠密 + BM25 | 57.6% | 61.9% | 46.6% | 3 | 43.3–48.3 |
 | SimpleMem | ✗ 直接给答案，从不返回原文轮次 | ✗ 同上 | — 见下 | — | — |
-| *Amem，换更强的模型作答* | *— 检索相同* | *— 同上* | *54.5%* | 7 | 52.5–55.8 |
+| *Carryover，换更强的模型作答* | *— 检索相同* | *— 同上* | *54.5%* | 7 | 52.5–55.8 |
 
-**✻** 来自 118 题子集，与 302 题各行不可直接并列。同一子集上 Amem 是 61.9%，MemOS 是 69.5%。
+**✻** 来自 118 题子集，与 302 题各行不可直接并列。同一子集上 Carryover 是 61.9%，MemOS 是 69.5%。
 **†** 不是同一预算：Cognee 的一个"结果"是二十轮的文档块，八个结果就是 160 轮，而别人是八轮。
 
-**Cognee 和 SimpleMem 在这里没有端到端数字。** 它们在查询时跑自己的模型，所以那个数字量的是**它们的模型和它们的记忆合在一起**，而没有办法把模型固定住来比较。对照那一行说明了其中有多少是模型的功劳：同样的 Amem 检索，换个更强的模型作答就动了五个点，而存下来的东西一个字没变。它们的代价在下面那张表里，那里是可比的。
+**Cognee 和 SimpleMem 在这里没有端到端数字。** 它们在查询时跑自己的模型，所以那个数字量的是**它们的模型和它们的记忆合在一起**，而没有办法把模型固定住来比较。对照那一行说明了其中有多少是模型的功劳：同样的 Carryover 检索，换个更强的模型作答就动了五个点，而存下来的东西一个字没变。它们的代价在下面那张表里，那里是可比的。
 
 ### 代价
 
@@ -71,7 +71,7 @@ Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"�
 
 | 系统 | 建库 | 查询中位 | 索引磁盘 | 写一条再搜索 | 安装体积 |
 |---|---|---|---|---|---|
-| **Amem** | **0.0 秒** | 0.5 ms | 1.0 MB | **1.7 ms** | **除标准库外为 0** |
+| **Carryover** | **0.0 秒** | 0.5 ms | 1.0 MB | **1.7 ms** | **除标准库外为 0** |
 | LlamaIndex BM25 | 0.1 秒 | **0.1 ms** | 0.7 MB | ✗ 整体重建 —— 索引在内存里 | ~970 MB 环境 |
 | txtai | 1.5 秒 | 8.5 ms | 2.0 MB | ✗ 整体重建 —— 索引在内存里 | ~970 MB 环境 |
 | mem0（关闭抽取） | 30.5 秒 | 39.5 ms | 3.7 MB | — 没跑；qdrant 是增量写入，本来也不该有重建 | 360 MB 依赖树 |
@@ -81,7 +81,7 @@ Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"�
 
 最后三行的建库发生在 LLM 里，所以它们的耗时是账单而不是跑分，和前四行不同量纲。它们的查询延迟和索引大小标 ✗ 也是同一个原因：没有本地索引可计时、可测量，而给一次网络往返报个毫秒数，报的是网络不是系统。
 
-**写一条记忆再搜索，这里是 1.7 ms，而两个最快的检索器根本走不了这条路**：它们把索引放在内存里，加一条就得整体重建。记忆是一条条攒出来的，所以这条路径被走到的次数远多于任何一次检索。反方向也记清楚：BM25 的查询比 Amem 快五倍，而两者都远低于能被察觉的阈值。
+**写一条记忆再搜索，这里是 1.7 ms，而两个最快的检索器根本走不了这条路**：它们把索引放在内存里，加一条就得整体重建。记忆是一条条攒出来的，所以这条路径被走到的次数远多于任何一次检索。反方向也记清楚：BM25 的查询比 Carryover 快五倍，而两者都远低于能被察觉的阈值。
 
 ### 每次会话的 token 开销
 
@@ -90,7 +90,7 @@ Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"�
 | 策略 | 输入 tokens | 其中命中缓存 | **实付** | 比基准多 |
 |---|---|---|---|---|
 | 无记忆（基准） | 5,566 | 5,426 | 140 | n/a —— 这就是基准 |
-| **Amem —— 开场写一次** | 45,726 | 44,464 | **1,262** | +1,122 |
+| **Carryover —— 开场写一次** | 45,726 | 44,464 | **1,262** | +1,122 |
 | 每轮检索并注入 | 21,191 | 18,711 | **2,480** | +2,340 |
 
 按名义 token 算，开场注入贵 2.2 倍；按实际计费算，**它便宜一半**，而且差距随会话变长继续拉大。开场注入是稳定前缀，后面每一轮都能复用；每轮往前面写检索结果会改写前缀，把它后面的缓存全部作废。
@@ -103,25 +103,25 @@ Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"�
 
 | 系统 | 返回当前值 | 返回已被取代的值 | 两者并列且未指明 | 从未变更的规则留存 |
 |---|---|---|---|---|
-| **Amem** | **6/6** | 0 | 0 | **3/3** |
+| **Carryover** | **6/6** | 0 | 0 | **3/3** |
 | mem0(`infer=True`) | 4/6 | 1 | 1 | 1/3 |
 | txtai · LlamaIndex BM25 | ✗ 它们是检索器不是记忆 —— 没有“事实被取代”这个概念 | | | |
 | Cognee · MemOS · SimpleMem | — 没有在这个协议上跑 | | | |
 
 最后一列比第一列更值得看：**三条从未变更的规则，mem0 只留住了一条**。一条不再出现的长期指令，就是一条不再被遵守的指令，而且**没有任何迹象表明它消失了**。
 
-**而 Amem 赢这一项靠的不是为它建的那个机制**:去重一次都没触发，而且按设计就不该触发。数字不同是一票否决项，而 `5494` 对 `8721` 正是这种情况。真正起作用的是**每条都带日期**，于是两个版本同时留在库里，读的人能排出先后。
+**而 Carryover 赢这一项靠的不是为它建的那个机制**:去重一次都没触发，而且按设计就不该触发。数字不同是一票否决项，而 `5494` 对 `8721` 正是这种情况。真正起作用的是**每条都带日期**，于是两个版本同时留在库里，读的人能排出先后。
 
 ### 没有 benchmark 会评分的性质
 
-| | Amem | mem0 | Cognee | MemOS | SimpleMem | txtai · BM25 |
+| | Carryover | mem0 | Cognee | MemOS | SimpleMem | txtai · BM25 |
 |---|---|---|---|---|---|---|
 | 写入需要人点头 | **是** | 否 | 否 | 否 | 否 | n/a |
 | 存储是可手改的纯文本 | **是** | 否 —— 向量库 | 否 | 否 | 否 —— lancedb | 否 |
 | 不需要任何服务或模型即可运行 | **是** | 需要嵌入模型 | 需要 LLM | 需要嵌入模型 | 需要 LLM | 需要嵌入模型 |
 | 记忆不问也会到场 | **是** | 否 | 否 | 否 | 否 | 否 |
 
-**四行全是“是”的只有一列。** 最后一行尤其是 Amem 存在的理由：这里其余每一个系统都是查询驱动的：你问，它找。而“对外文档里不许出现函数名”不是任何人会去问的东西，在 243 条真实发言里 **89% 是指令**，那些场景里根本没有检索发生。一个只在被问到时才工作的记忆，在你 89% 的时间里是不工作的。
+**四行全是“是”的只有一列。** 最后一行尤其是 Carryover 存在的理由：这里其余每一个系统都是查询驱动的：你问，它找。而“对外文档里不许出现函数名”不是任何人会去问的东西，在 243 条真实发言里 **89% 是指令**，那些场景里根本没有检索发生。一个只在被问到时才工作的记忆，在你 89% 的时间里是不工作的。
 
 ### 五个没能测成的
 
@@ -185,7 +185,7 @@ Amem 就建在这两个回答上：记忆按"必须在场"还是"可以查阅"�
 需要 Python 3.11 或更新。只有一个依赖，pip 会自动装上：
 
 ```bash
-pip install git+https://github.com/goldenxingxing/Amem
+pip install git+https://github.com/goldenxingxing/carryover
 ```
 
 还没发到 PyPI：名字占住了，但在 API 还可能变动期间不发包。要依赖它就锁一个 commit。它被什么衡量、以及那些发布过又撤回的结论，都在 `benchmarks/README.md`。
@@ -195,30 +195,34 @@ pip install git+https://github.com/goldenxingxing/Amem
 四个调用点。下面**不是示意，是一个完整的宿主**：它是照着全新安装写完跑通的，一共二十三行，因为其余的事这个包自己做了。
 
 ```python
-import amem
+import carryover
 
-store = amem.Store("~/.myagent/memory")          # 路径是你的；`~` 会被展开
+store = carryover.Store("~/.myagent/memory")  # 路径是你的；`~` 会被展开
+
 
 # 1. 开场。不需要查询 —— agent 最需要知道的那些事，恰恰是没人会想到去问的。
 def opening_context() -> str:
-    return amem.render(store.entries(), store.recent(), store.pending())
+    return carryover.render(store.entries(), store.recent(), store.pending())
+
 
 # 2. 一个工具。操作是校验过的数据，执行也包含在内；
 #    留给你的是"要不要先问一句"。
 async def memory_tool(payload: dict) -> str:
     try:
-        op = amem.parse_operation(payload)
-    except amem.UnknownOperation as exc:
-        return f"error: {exc}"                    # 会列出真实存在的操作
+        op = carryover.parse_operation(payload)
+    except carryover.UnknownOperation as exc:
+        return f"error: {exc}"  # 会列出真实存在的操作
     if op.writes and not await ask_the_user(op.describe()):
         return "declined"
-    return amem.execute(store, op).model_dump_json(exclude_defaults=True)
+    return carryover.execute(store, op).model_dump_json(exclude_defaults=True)
+
 
 # 3. 结束。抽取只负责注意到，决定权在人。
 async def on_session_end(transcript: str, complete) -> None:
-    store.suggest(await amem.propose(complete, transcript))
-    store.note_topics(transcript)                 # 供休眠排序使用
+    store.suggest(await carryover.propose(complete, transcript))
+    store.note_topics(transcript)  # 供休眠排序使用
     append_summary(store.directory / "recent.jsonl", summary_of(transcript))
+
 
 # 4. 你的批准方式。对话框、命令行、一条策略 —— 这个包对此没有意见，
 #    也没有办法替你回答。
@@ -244,7 +248,7 @@ async def ask_the_user(what: str) -> bool: ...
 如果你的 agent 是通过自己的工具够到这些操作的，就把叫法告诉它 —— 开场注入会写明该调什么，所以措辞必须指向你的宿主里真实存在的东西：
 
 ```python
-amem.render(entries, recent, pending, actions=amem.Actions(
+carryover.render(entries, recent, pending, actions=carryover.Actions(
     search='`Memory({"op": "search", "query": "<query>"})`',
     promote='`Memory({"op": "promote", "id": "<id>"})`',
     ...
@@ -258,8 +262,8 @@ amem.render(entries, recent, pending, actions=amem.Actions(
 ```python
 store.add("project", "日报写在 output/reports/daily/ 下。", key="reports/daily")
 store.search("日报写在哪个目录")
-store.get("reports/daily")                # 用 key、id 或不产生歧义的 id 前缀
-store.keep(candidate_id)                  # 只在有人点头之后
+store.get("reports/daily")  # 用 key、id 或不产生歧义的 id 前缀
+store.keep(candidate_id)  # 只在有人点头之后
 ```
 
 ### 让它不越用越贵
@@ -267,13 +271,13 @@ store.keep(candidate_id)                  # 只在有人点头之后
 库会填满，条目会不再成立。这些**一个都不自己动手** —— 每一个是什么意思，见[库怎么才不会越用越贵](#库怎么才不会越用越贵)：
 
 ```python
-fit, held = amem.pressure(store.entries(), amem.BEHAVIOURAL_BUDGET_CHARS)
-amem.find_superseded(store.entries())     # 被新条目取代的旧条目
-amem.find_dormant(store.entries(), now=time.time())
+fit, held = carryover.pressure(store.entries(), carryover.BEHAVIOURAL_BUDGET_CHARS)
+carryover.find_superseded(store.entries())  # 被新条目取代的旧条目
+carryover.find_dormant(store.entries(), now=time.time())
 
-store.affirm("reports/daily")             # 提过了，而且它仍然有效
+store.affirm("reports/daily")  # 提过了，而且它仍然有效
 store.consolidate(合并后的文本, replacing=["reports/v1", "reports/v2"])
-store.retire("api/version")               # 移出开场注入，但仍在文件里
+store.retire("api/version")  # 移出开场注入，但仍在文件里
 ```
 
 **当新条目是在复述旧条目时，优先用 `consolidate` 而不是 `retire`。**
@@ -283,8 +287,8 @@ store.retire("api/version")               # 移出开场注入，但仍在文件
 有两处默认取自当前进程，这在桌面上是对的，在请求处理里是任意的：
 
 ```python
-await amem.propose(complete, transcript, today=用户当地日期)
-await amem.propose(complete, transcript, prompt=你自己的模板)
+await carryover.propose(complete, transcript, today=用户当地日期)
+await carryover.propose(complete, transcript, prompt=你自己的模板)
 ```
 
 `today` 是模型解析"上周二"的基准，而它会被写进一条比对话活得更久的事实里 —— **一台 UTC 的服务器和一个上海的用户，每天有好几个小时对"今天是哪天"看法不一致**。`prompt` 留给领域、语言或"什么可以被记录"的规则是自己那一套的宿主；它必须接受 `{conversation}` 和 `{today}`，而为了改一段话去复制那个函数，就是 fork 的开始。
@@ -298,7 +302,7 @@ await amem.propose(complete, transcript, prompt=你自己的模板)
 ```python
 for candidate in await propose(complete, transcript):
     store.suggest([candidate])
-    store.keep(candidate.id)          # 无人值守：不会有人被问到
+    store.keep(candidate.id)  # 无人值守：不会有人被问到
 ```
 
 作为默认值，它就是所有从没去看过的人的实际行为，而本项目相对其他方案唯一能声称的那一栏，会悄悄变得和别人一样。
@@ -310,7 +314,7 @@ for candidate in await propose(complete, transcript):
 这里每一种失效都是安静的。抽取没找到东西，看起来就像一次没什么值得记的对话 —— 而那是常见且正确的答案。检索没命中，看起来就像库里没有。这些都不抛异常，是故意的：记忆系统不该弄坏它所依附的东西。代价就是**你没法靠观察分辨"在工作"和"根本没接上"**。
 
 ```bash
-python -m amem check ~/.myagent/memory
+python -m carryover check ~/.myagent/memory
 ```
 
 **能力**是关于这台机器的 —— 索引建不建得起来、往临时目录里写一条再搜回来行不行（分词文字和连写文字各测一次）。它不碰你的任何东西。**证据**是关于你这个库的：有会话摘要说明有东西在调结束钩子，有待批准提案说明抽取跑过，有主题戳说明对话被传回来过，有条目说明有人批准过。
@@ -319,7 +323,7 @@ python -m amem check ~/.myagent/memory
 
 ## 设计上的承诺
 
-这些是**约束**而不是偏好。每一条都是 Amem 愿意为之牺牲性能的东西。
+这些是**约束**而不是偏好。每一条都是 Carryover 愿意为之牺牲性能的东西。
 
 | | |
 |---|---|
@@ -327,4 +331,4 @@ python -m amem check ~/.myagent/memory
 | **库是一个文本文件** | 可 grep、可 diff、可编辑、可纳入版本管理。索引是一个会自动重建的缓存。 |
 | **没有批准就不写入** | 抽取产生的是候选。候选是提案。 |
 | **什么都不销毁** | 被取代的条目是**退役**:移出注入集合，仍在文件里，仍可检索，可以恢复。 |
-| **模型是你的** | Amem 从不 import 任何 LLM 客户端。有测试断言这一点。 |
+| **模型是你的** | Carryover 从不 import 任何 LLM 客户端。有测试断言这一点。 |

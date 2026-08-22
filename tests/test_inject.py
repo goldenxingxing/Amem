@@ -13,15 +13,15 @@ from __future__ import annotations
 
 import time
 
-from amem.candidates import MemoryCandidate
-from amem.consolidate import (
+from carryover.candidates import MemoryCandidate
+from carryover.consolidate import (
     BEHAVIOURAL_BUDGET_CHARS,
     PRESSURE_ACT_AT,
     PRESSURE_WARN_AT,
 )
-from amem.entry import MemoryEntry
-from amem.inject import DEFAULT_ACTIONS, Actions, render
-from amem.recent import SessionSummary
+from carryover.entry import MemoryEntry
+from carryover.inject import DEFAULT_ACTIONS, Actions, render
+from carryover.recent import SessionSummary
 
 
 def _entry(kind: str, content: str, *, key: str | None = None, **kw) -> MemoryEntry:
@@ -344,7 +344,7 @@ class TestTheHostNamesItsOwnActions:
         import re
         from dataclasses import fields
 
-        from amem.operations import OPERATION_NAMES
+        from carryover.operations import OPERATION_NAMES
 
         spelled = " ".join(getattr(DEFAULT_ACTIONS, f.name) for f in fields(DEFAULT_ACTIONS))
         named = set(re.findall(r'"op":\s*"(\w+)"', spelled))
@@ -354,6 +354,6 @@ class TestTheHostNamesItsOwnActions:
 
     def test_a_default_action_round_trips_through_the_parser(self) -> None:
         """Named is not enough — the shape has to validate."""
-        from amem.operations import GetOp, parse_operation
+        from carryover.operations import GetOp, parse_operation
 
         assert isinstance(parse_operation({"op": "get", "handle": "p/one"}), GetOp)

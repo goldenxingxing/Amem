@@ -90,8 +90,8 @@ def ours_on(questions) -> list[dict[int, float]]:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     import tempfile
 
-    from amem.entry import MemoryEntry
-    from amem.search import MemorySearchIndex
+    from carryover.entry import MemoryEntry
+    from carryover.search import MemorySearchIndex
 
     turns = []
     for sample in json.loads(DATA.read_text(encoding="utf-8"))[:SAMPLES]:
@@ -136,7 +136,7 @@ def main() -> None:
 
     rows = ours_on(asked)
     cells = "".join(f"{statistics.mean(r[k] for r in rows) * 100:>10.1f}%" for k in TOP_K)
-    print(f"{'Amem (rescored on that subset)':<32}{cells}")
+    print(f"{'Carryover (rescored on that subset)':<32}{cells}")
 
     score(memos, "MemOS (returns 8 source turns)", per_result=1)
     score(Path(os.environ["COGNEE_NOTES"]), "Cognee (retrieved chunks)", per_result=20)

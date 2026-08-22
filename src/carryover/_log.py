@@ -10,5 +10,5 @@ from __future__ import annotations
 
 import logging
 
-logger = logging.getLogger("amem")
+logger = logging.getLogger("carryover")
 logger.addHandler(logging.NullHandler())

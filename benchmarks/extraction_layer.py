@@ -1,7 +1,7 @@
 """Our own extraction layer, measured the way Cognee's graph was.
 
 Everything benchmarked so far fed raw dialogue turns into a retriever, which is
-not what this product stores. Amem stores facts that were extracted from a
+not what this product stores. Carryover stores facts that were extracted from a
 conversation and approved by the user; the retriever sits on top of those. So
 the comparison run until now measured the bottom half of the system against
 whole systems, and it measured it on input the top half was supposed to have
@@ -45,8 +45,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import httpx
 from judge import Model
 
-from amem.entry import MemoryEntry
-from amem.search import MemorySearchIndex
+from carryover.entry import MemoryEntry
+from carryover.search import MemorySearchIndex
 
 DATA = Path(__file__).with_name(os.environ.get("BENCH_DATA", "locomo10.json"))
 SAMPLES = int(os.environ.get("BENCH_SAMPLES", "2"))
@@ -58,7 +58,7 @@ _PRODUCTION = None  # filled from the shipped prompt
 
 
 def shipped_prompt() -> str:
-    from amem.extract import EXTRACTION_PROMPT
+    from carryover.extract import EXTRACTION_PROMPT
 
     return EXTRACTION_PROMPT
 
@@ -157,9 +157,9 @@ async def main() -> None:
     model = Model(8)
 
     variants = {
-        "Amem 抽取层（线上提示词，上限5）": (shipped_prompt(), 5),
-        "Amem 抽取层（线上提示词，上限12）": (shipped_prompt(), 12),
-        "Amem 抽取层（改写提示词，上限12）": (_NEUTRAL, 12),
+        "Carryover 抽取层（线上提示词，上限5）": (shipped_prompt(), 5),
+        "Carryover 抽取层（线上提示词，上限12）": (shipped_prompt(), 12),
+        "Carryover 抽取层（改写提示词，上限12）": (_NEUTRAL, 12),
     }
 
     retrieved: dict[str, list[tuple[str, str, str]]] = {}

@@ -10,9 +10,9 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import amem
-from amem import Store
-from amem.candidates import MemoryCandidate
+import carryover
+from carryover import Store
+from carryover.candidates import MemoryCandidate
 
 
 def _store() -> Store:
@@ -105,14 +105,14 @@ class TestTheFirstLineAnyoneCopies:
     """
 
     def test_a_tilde_path_resolves_to_the_home_directory(self) -> None:
-        store = Store("~/.amem-test-should-not-exist/memory")
+        store = Store("~/.carryover-test-should-not-exist/memory")
 
         assert "~" not in str(store.directory)
         assert store.directory.is_absolute()
         assert str(store.directory).startswith(str(Path.home()))
 
     def test_the_file_paths_follow_the_expanded_directory(self) -> None:
-        store = Store("~/.amem-test-should-not-exist/memory")
+        store = Store("~/.carryover-test-should-not-exist/memory")
 
         assert "~" not in str(store.path)
         assert store.path.parent == store.directory
@@ -122,14 +122,14 @@ class TestTheFirstLineAnyoneCopies:
 
 
 class TestTheModelBoundary:
-    """`amem` must never import an LLM client. A caller supplies one function."""
+    """`carryover` must never import an LLM client. A caller supplies one function."""
 
     async def test_extraction_runs_on_any_completer(self) -> None:
         async def complete(system: str, user: str) -> str:
             assert "<transcript>" in user, "the transcript is embedded, not appended"
             return '[{"kind": "project", "content": "Port is 8721.", "key": "win/port"}]'
 
-        got = await amem.propose(complete, "user: the port is 8721\nassistant: noted\n" * 12)
+        got = await carryover.propose(complete, "user: the port is 8721\nassistant: noted\n" * 12)
 
         assert [c.content for c in got] == ["Port is 8721."]
 
@@ -137,7 +137,7 @@ class TestTheModelBoundary:
         async def broken(system: str, user: str) -> str:
             raise RuntimeError("provider is down")
 
-        assert await amem.propose(broken, "x" * 400) == []
+        assert await carryover.propose(broken, "x" * 400) == []
 
     def test_the_package_imports_nothing_it_does_not_declare(self) -> None:
         """Asserted rather than trusted: this is the reason it installs anywhere.
@@ -151,9 +151,9 @@ class TestTheModelBoundary:
         import pkgutil
         import sys
 
-        import amem as package
+        import carryover as package
 
-        allowed = set(sys.stdlib_module_names) | {"amem", "pydantic"}
+        allowed = set(sys.stdlib_module_names) | {"carryover", "pydantic"}
         root = Path(package.__file__).parent
 
         for module in pkgutil.iter_modules(package.__path__):
@@ -167,7 +167,7 @@ class TestTheModelBoundary:
                     continue
                 for name in names:
                     top = name.split(".")[0]
-                    assert top in allowed, f"amem.{module.name} imports undeclared {top}"
+                    assert top in allowed, f"carryover.{module.name} imports undeclared {top}"
 
 
 class TestRendering:
@@ -176,7 +176,7 @@ class TestRendering:
         store.add("feedback", "对外文档不得出现代码函数名。")
         store.add("project", "邮箱配置在 ~/mail.env。", key="mail/env")
 
-        out = amem.render(store.entries(), store.recent(), store.pending())
+        out = carryover.render(store.entries(), store.recent(), store.pending())
 
         assert "对外文档不得出现代码函数名。" in out, "behavioural memory is stated in full"
         assert "mail/env" in out, "recorded facts arrive as an index"
@@ -190,9 +190,9 @@ def test_the_package_declares_itself_typed() -> None:
     consumer getting types and a consumer getting an error per import. Found by
     integrating into a typed codebase, not by anything in this repo.
     """
-    import amem
+    import carryover
 
-    assert (Path(amem.__file__).parent / "py.typed").is_file()
+    assert (Path(carryover.__file__).parent / "py.typed").is_file()
 
 
 class TestTheSharedPrimitive:
@@ -205,18 +205,18 @@ class TestTheSharedPrimitive:
     """
 
     def test_it_is_reachable_from_the_package_root(self) -> None:
-        assert amem.fold_text("Ｒemember  THIS") == "remember this"
-        assert "fold_text" in amem.__all__
+        assert carryover.fold_text("Ｒemember  THIS") == "remember this"
+        assert "fold_text" in carryover.__all__
 
     def test_all_three_axes_are_applied(self) -> None:
-        assert amem.fold_text("Ｒ") == "r", "fullwidth is not folded"
-        assert amem.fold_text("a  \n b") == "a b", "whitespace runs are not collapsed"
-        assert amem.fold_text("MiXeD") == "mixed", "case is not folded"
+        assert carryover.fold_text("Ｒ") == "r", "fullwidth is not folded"
+        assert carryover.fold_text("a  \n b") == "a b", "whitespace runs are not collapsed"
+        assert carryover.fold_text("MiXeD") == "mixed", "case is not folded"
 
     def test_it_drops_nothing(self) -> None:
         """Folding must not change what statement the string makes."""
-        assert amem.fold_text("don't — really!") == "don't — really!"
-        assert amem.fold_text("记住 A/B") == "记住 a/b"
+        assert carryover.fold_text("don't — really!") == "don't — really!"
+        assert carryover.fold_text("记住 A/B") == "记住 a/b"
 
 
 class TestConsolidating:
@@ -324,7 +324,7 @@ class TestThereIsNoWayToApproveAutomatically:
         """The function that notices facts is not given anything to write with."""
         import inspect
 
-        from amem import propose
+        from carryover import propose
 
         params = set(inspect.signature(propose).parameters)
 
@@ -341,7 +341,7 @@ class TestThereIsNoWayToApproveAutomatically:
 
     def test_nothing_accumulates_when_nobody_decides(self) -> None:
         """A queue nobody clears is noise in every future session."""
-        from amem.candidates import MAX_CANDIDATES
+        from carryover.candidates import MAX_CANDIDATES
 
         store = _store()
 

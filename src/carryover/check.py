@@ -21,9 +21,9 @@ entry means somebody approved one. Nothing here can prove a call happens — onl
 that it has happened at least once, which is the question worth asking after
 wiring it up.
 
-    python -m amem check ~/.myagent/memory
+    python -m carryover check ~/.myagent/memory
 
-Returns findings and prints nothing. The command lives in :mod:`amem.__main__`,
+Returns findings and prints nothing. The command lives in :mod:`carryover.__main__`,
 because a host embedding this in its own interface wants the answers, not this
 package's opinion about stdout — and a library that can end its caller's
 process is not one you can call from inside a request.
@@ -38,17 +38,17 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from amem.candidates import CANDIDATES_FILENAME, CandidateFile
-from amem.consolidate import (
+from carryover.candidates import CANDIDATES_FILENAME, CandidateFile
+from carryover.consolidate import (
     BEHAVIOURAL_BUDGET_CHARS,
     PRESSURE_ACT_AT,
     PRESSURE_WARN_AT,
     find_superseded,
     pressure,
 )
-from amem.entry import MemoryEntry
-from amem.recent import RECENT_FILENAME, read_recent_summaries
-from amem.store import Store
+from carryover.entry import MemoryEntry
+from carryover.recent import RECENT_FILENAME, read_recent_summaries
+from carryover.store import Store
 
 OK = "ok"
 WARN = "warn"
@@ -77,11 +77,10 @@ def check_capability() -> list[Finding]:
     """Whether the machine can run this at all. Touches nothing of yours."""
     out: list[Finding] = []
 
-    import amem
+    import carryover
 
-    out.append(
-        Finding("installed", OK, f"amem {amem.__version__} on Python {sys.version.split()[0]}")
-    )
+    python = sys.version.split()[0]
+    out.append(Finding("installed", OK, f"carryover {carryover.__version__} on Python {python}"))
 
     # The index needs FTS5 with a trigram tokeniser, which arrived in SQLite
     # 3.34. Without it retrieval still works — it falls back to the scan — but
@@ -103,7 +102,7 @@ def check_capability() -> list[Finding]:
             )
         )
 
-    scratch = Store(Path(tempfile.mkdtemp(prefix="amem-check-")))
+    scratch = Store(Path(tempfile.mkdtemp(prefix="carryover-check-")))
     scratch.add("project", "日报写在 output/reports/daily/ 下。", key="probe/zh")
     scratch.add("project", "The daily report lives in output/reports/daily.", key="probe/en")
     found = {
@@ -124,7 +123,7 @@ def check_capability() -> list[Finding]:
     else:
         out.append(Finding("retrieval", OK, "a probe stored and found again, both scripts"))
 
-    preamble = amem.render(scratch.entries(), [])
+    preamble = carryover.render(scratch.entries(), [])
     if "probe/zh" in preamble:
         out.append(Finding("preamble", OK, f"renders, {len(preamble)} characters for 2 entries"))
     else:
@@ -225,7 +224,7 @@ def _candidates(directory: Path, entries: list[MemoryEntry]) -> Finding:
     hint = (
         "Either nothing calls `propose(complete, transcript)` + `store.suggest()`, or it "
         "runs and finds nothing — which is the common answer and not a fault. To tell "
-        "them apart, turn on DEBUG for the `amem` logger for one session: a refusal logs "
+        "them apart, turn on DEBUG for the `carryover` logger for one session: a refusal logs "
         "at DEBUG, a reply that could not be read logs at WARNING, and a call that never "
         "happened logs neither."
     )

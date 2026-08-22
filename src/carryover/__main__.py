@@ -1,10 +1,10 @@
-"""``python -m amem check <store-dir>``.
+"""``python -m carryover check <store-dir>``.
 
 A module entry point rather than a console script: this package installs one
 importable name and nothing on a PATH, and a host that vendored it should be
 able to reach the check without anything having been installed at all.
 
-Printing and the exit code live here rather than in :mod:`amem.check`, which
+Printing and the exit code live here rather than in :mod:`carryover.check`, which
 returns findings and says nothing. A library that writes to stdout has decided
 how its caller reports, and one that can raise SystemExit can end a request it
 was only asked a question by.
@@ -15,7 +15,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from amem.check import FAIL, report
+from carryover.check import FAIL, report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
             print(finding.render())
     else:
         print("\nPass a store directory to also check what has been using it:")
-        print("    python -m amem check ~/.myagent/memory")
+        print("    python -m carryover check ~/.myagent/memory")
 
     return 1 if any(f.status == FAIL for f in capability + evidence) else 0
 

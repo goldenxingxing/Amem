@@ -8,7 +8,7 @@ know its own is arguing from silence.
 The measurement has to be an honest one for two designs that spend tokens in
 opposite places:
 
-- **Amem** pays once, at the start. Behavioural memory arrives in full whether
+- **Carryover** pays once, at the start. Behavioural memory arrives in full whether
   or not it is relevant, and the index arrives with it. Nothing is spent per
   turn, and the prefix is stable, so a provider that caches prompt prefixes
   charges for it once.
@@ -40,8 +40,8 @@ from _prereq import require_env
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from amem import Store, render
-from amem.consolidate import BEHAVIOURAL_BUDGET_CHARS
+from carryover import Store, render
+from carryover.consolidate import BEHAVIOURAL_BUDGET_CHARS
 
 TURNS = int(os.environ.get("BENCH_TURNS", "40"))
 TOP_K = 3
@@ -177,7 +177,7 @@ def seeded_store(directory: Path) -> Store:
 
 
 async def run_preloaded(model: Model, client: httpx.AsyncClient, store: Store, turns: list[str]):
-    """Amem: one preamble at the start, nothing per turn."""
+    """Carryover: one preamble at the start, nothing per turn."""
     preamble = render(store.entries(), store.recent(), store.pending())
     usage = Usage()
     history = [{"role": "system", "content": preamble}]
@@ -250,7 +250,7 @@ async def main() -> None:
     model = Model()
     strategies = {
         "无记忆（地板）": run_no_memory,
-        "Amem（开场一次性注入）": run_preloaded,
+        "Carryover（开场一次性注入）": run_preloaded,
         "查询驱动（每轮检索注入）": run_per_turn,
     }
     results = {}

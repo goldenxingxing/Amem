@@ -1,5 +1,5 @@
 [project]
-name = "amem"
+name = "carryover"
 version = "0.1.0"
 description = "Cross-session memory for agents — two text files and the standard library"
 readme = "README.md"
@@ -28,10 +28,10 @@ classifiers = [
 dependencies = ["pydantic>=2.0"]
 
 [project.urls]
-Homepage = "https://github.com/goldenxingxing/Amem"
-Repository = "https://github.com/goldenxingxing/Amem"
-Issues = "https://github.com/goldenxingxing/Amem/issues"
-Benchmarks = "https://github.com/goldenxingxing/Amem/blob/main/benchmarks/README.md"
+Homepage = "https://github.com/goldenxingxing/carryover"
+Repository = "https://github.com/goldenxingxing/carryover"
+Issues = "https://github.com/goldenxingxing/carryover/issues"
+Benchmarks = "https://github.com/goldenxingxing/carryover/blob/main/benchmarks/README.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6"]
@@ -54,8 +54,8 @@ build-backend = "hatchling.build"
 # type checker gets "stub file not found" for every import, which is what
 # integrating this into a typed codebase turned up immediately.
 [tool.hatch.build.targets.wheel]
-packages = ["src/amem"]
-artifacts = ["src/amem/py.typed"]
+packages = ["src/carryover"]
+artifacts = ["src/carryover/py.typed"]
 
 [tool.ruff]
 line-length = 100

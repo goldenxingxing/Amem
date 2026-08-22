@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from amem.consolidate import (
+from carryover.consolidate import (
     MAX_PROPOSALS,
     SUPERSEDED_RATIO,
     find_dormant,
@@ -19,7 +19,7 @@ from amem.consolidate import (
     mark_relevant,
     pressure,
 )
-from amem.entry import MemoryEntry
+from carryover.entry import MemoryEntry
 
 
 def _entry(kind: str, content: str, *, retired: bool = False) -> MemoryEntry:
@@ -113,7 +113,7 @@ class TestFindingSupersession:
 
     def test_the_floor_sits_below_the_merge_threshold(self) -> None:
         """Entries similar enough to merge outright never reach this code."""
-        from amem.dedup import AUTO_MERGE_RATIO
+        from carryover.dedup import AUTO_MERGE_RATIO
 
         assert SUPERSEDED_RATIO < AUTO_MERGE_RATIO
 
@@ -150,8 +150,8 @@ class TestTheThresholdSeparatesRealCases:
     """
 
     def _score(self, a: str, b: str) -> float:
-        from amem.consolidate import _similarity
-        from amem.dedup import normalize_content
+        from carryover.consolidate import _similarity
+        from carryover.dedup import normalize_content
 
         return _similarity(normalize_content(a), normalize_content(b))
 
@@ -183,7 +183,7 @@ class TestTheThresholdSeparatesRealCases:
 
     def test_chinese_is_compared_meaningfully(self) -> None:
         """Splitting on whitespace makes a Chinese rule one token and every score 0 or 1."""
-        from amem.consolidate import _tokens
+        from carryover.consolidate import _tokens
 
         assert len(_tokens("日报要简洁")) == 5
 
@@ -201,7 +201,7 @@ class TestTheThresholdSeparatesRealCases:
         going to fail for the machine rather than for the code. Doubling the
         length of every entry must not change how many comparisons happen.
         """
-        from amem import consolidate
+        from carryover import consolidate
 
         def comparisons_at(length: int) -> int:
             calls = 0

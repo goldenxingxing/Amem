@@ -29,8 +29,8 @@ from _prereq import require_env
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from amem.entry import MemoryEntry
-from amem.search import MemorySearchIndex
+from carryover.entry import MemoryEntry
+from carryover.search import MemorySearchIndex
 
 TOP_K = 3
 MODEL = os.environ.get("DENSE_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")

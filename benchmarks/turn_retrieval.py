@@ -39,8 +39,8 @@ from _prereq import require_env
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from amem.entry import MemoryEntry
-from amem.search import MemorySearchIndex
+from carryover.entry import MemoryEntry
+from carryover.search import MemorySearchIndex
 
 #: Two directories of your own, neither of them shipped: transcripts to draw
 #: user turns from (any tree of ``*/*.jsonl`` with ``{"role", "content"}``
@@ -146,7 +146,7 @@ async def build_store(client, sem) -> list[str]:
 
     from _transcripts import conversation_tail
 
-    from amem.extract import EXTRACTION_PROMPT, parse_candidates
+    from carryover.extract import EXTRACTION_PROMPT, parse_candidates
 
     sessions = _require("SESSIONS_DIR")
     ids = sorted(d.name for d in sessions.iterdir() if (d / "context.jsonl").is_file())

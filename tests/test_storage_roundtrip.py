@@ -13,8 +13,8 @@ import json
 import threading
 from pathlib import Path
 
-from amem.entry import MemoryEntry, MemoryKind
-from amem.storage import read_entries, upsert_entry
+from carryover.entry import MemoryEntry, MemoryKind
+from carryover.storage import read_entries, upsert_entry
 
 
 def entry(content: str, *, kind: MemoryKind = "user") -> MemoryEntry:
@@ -180,7 +180,7 @@ class TestEditingAndRemoving:
     """
 
     def test_an_edit_replaces_the_text_and_keeps_the_identity(self, tmp_path: Path) -> None:
-        from amem.storage import update_entry
+        from carryover.storage import update_entry
 
         path = tmp_path / "persistent.jsonl"
         original = upsert_entry(path, entry("Reports go in output/reports/")).entry
@@ -192,7 +192,7 @@ class TestEditingAndRemoving:
         assert [e.content for e in read_entries(path)] == ["Reports go in output/reports/daily/"]
 
     def test_editing_something_that_is_not_there_reports_it(self, tmp_path: Path) -> None:
-        from amem.storage import update_entry
+        from carryover.storage import update_entry
 
         path = tmp_path / "persistent.jsonl"
         upsert_entry(path, entry("a fact"))
@@ -201,7 +201,7 @@ class TestEditingAndRemoving:
         assert [e.content for e in read_entries(path)] == ["a fact"], "nothing else was touched"
 
     def test_a_delete_removes_only_its_own_entry(self, tmp_path: Path) -> None:
-        from amem.storage import delete_entry
+        from carryover.storage import delete_entry
 
         path = tmp_path / "persistent.jsonl"
         first = upsert_entry(path, entry("keep this")).entry
@@ -211,7 +211,7 @@ class TestEditingAndRemoving:
         assert [e.content for e in read_entries(path)] == ["and this too"]
 
     def test_deleting_twice_is_reported_rather_than_pretended(self, tmp_path: Path) -> None:
-        from amem.storage import delete_entry
+        from carryover.storage import delete_entry
 
         path = tmp_path / "persistent.jsonl"
         kept = upsert_entry(path, entry("a fact")).entry
@@ -226,7 +226,7 @@ class TestEditingAndRemoving:
         broke: the handler that skips a bad line raised instead, so one bad
         line made every subsequent edit fail.
         """
-        from amem.storage import update_entry
+        from carryover.storage import update_entry
 
         path = tmp_path / "persistent.jsonl"
         kept = upsert_entry(path, entry("a fact")).entry

@@ -23,8 +23,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
-from amem._log import logger
-from amem.entry import MemoryEntry, MemoryKind
+from carryover._log import logger
+from carryover.entry import MemoryEntry, MemoryKind
 
 CANDIDATES_FILENAME = "candidates.jsonl"
 

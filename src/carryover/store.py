@@ -19,11 +19,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from amem.candidates import CANDIDATES_FILENAME, CandidateFile, MemoryCandidate
-from amem.entry import MemoryEntry, MemoryKind
-from amem.recent import RECENT_FILENAME, SessionSummary, read_recent_summaries
-from amem.search import MemorySearchIndex, SearchHit
-from amem.storage import (
+from carryover.candidates import CANDIDATES_FILENAME, CandidateFile, MemoryCandidate
+from carryover.entry import MemoryEntry, MemoryKind
+from carryover.recent import RECENT_FILENAME, SessionSummary, read_recent_summaries
+from carryover.search import MemorySearchIndex, SearchHit
+from carryover.storage import (
     PERSISTENT_FILENAME,
     UpsertResult,
     delete_entry,

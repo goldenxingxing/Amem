@@ -75,8 +75,8 @@ def score(ranked: list[str], gold: set[str]) -> dict[int, float]:
 
 
 def run_ours(turns, questions):
-    from amem.entry import MemoryEntry
-    from amem.search import MemorySearchIndex
+    from carryover.entry import MemoryEntry
+    from carryover.search import MemorySearchIndex
 
     entries = [MemoryEntry(kind="project", scope="persistent", content=text) for _, text in turns]
     dia_by_entry = {e.id: dia for e, (dia, _) in zip(entries, turns, strict=True)}
@@ -189,7 +189,7 @@ def main() -> None:
     print(f"{'retriever':<34}{header}")
     print("-" * (34 + 11 * len(TOP_K)))
     for label, rows in (
-        ("Amem (SQLite FTS5 词法)", ours),
+        ("Carryover (SQLite FTS5 词法)", ours),
         (f"mem0 (纯向量 {EMBED_MODEL.split('/')[-1]})", theirs),
         ("mem0 (qdrant 混合: 向量+BM25)", hybrid),
     ):

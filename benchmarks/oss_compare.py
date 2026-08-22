@@ -61,8 +61,8 @@ def ours(turns, questions):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     import tempfile
 
-    from amem.entry import MemoryEntry
-    from amem.search import MemorySearchIndex
+    from carryover.entry import MemoryEntry
+    from carryover.search import MemorySearchIndex
 
     entries = [MemoryEntry(kind="project", scope="persistent", content=t) for _, t in turns]
     dia = {e.id: d for e, (d, _) in zip(entries, turns, strict=True)}
@@ -107,7 +107,7 @@ def llamaindex_bm25(turns, questions):
 
 
 SYSTEMS = {
-    "Amem (FTS5 + IDF scan)": ours,
+    "Carryover (FTS5 + IDF scan)": ours,
     "txtai (稠密+BM25 混合)": txtai_hybrid,
     "LlamaIndex BM25": llamaindex_bm25,
 }

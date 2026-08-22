@@ -18,7 +18,7 @@ import inspect
 
 import pytest
 
-from amem.extract import (
+from carryover.extract import (
     EXTRACTION_PROMPT,
     MIN_CONVERSATION_CHARS,
     looks_like_refusal,
@@ -185,12 +185,12 @@ class TestSilentFailureIsNotSilent:
         async def declined(system: str, user: str) -> str:
             return "[]"
 
-        with caplog.at_level(logging.WARNING, logger="amem"):
+        with caplog.at_level(logging.WARNING, logger="carryover"):
             assert await propose(continued_the_conversation, "x" * 400) == []
         assert any("nothing usable" in r.getMessage() for r in caplog.records)
 
         caplog.clear()
-        with caplog.at_level(logging.WARNING, logger="amem"):
+        with caplog.at_level(logging.WARNING, logger="carryover"):
             assert await propose(declined, "x" * 400) == []
         assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
 

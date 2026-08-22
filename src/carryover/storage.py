@@ -17,9 +17,9 @@ else:
 
 from collections.abc import Sequence
 
-from amem._log import logger
-from amem.dedup import classify_entry, compact_entries, merge_entry
-from amem.entry import MemoryEntry
+from carryover._log import logger
+from carryover.dedup import classify_entry, compact_entries, merge_entry
+from carryover.entry import MemoryEntry
 
 
 @contextlib.contextmanager
@@ -106,7 +106,7 @@ def stamp_relevance(path: Path, conversation: str, *, now: float) -> int:
     this runs at compaction, and a session ending while another writes a memory
     is an ordinary thing rather than a rare one.
     """
-    from amem.consolidate import mark_relevant
+    from carryover.consolidate import mark_relevant
 
     with _locked(path, exclusive=True):
         entries = _read_raw(path)
@@ -217,7 +217,7 @@ def upsert_entry(
 def set_affirmed(path: Path, handle: str) -> MemoryEntry | None:
     """Record that this entry was put to someone and kept. Returns it, or ``None``.
 
-    The other half of :func:`amem.consolidate.find_superseded`. Without it the
+    The other half of :func:`carryover.consolidate.find_superseded`. Without it the
     only answer the advisory can record is "yes, retire it": say no and the
     same pair is offered next session, and every session after, which is how a
     prompt that asks for attention teaches people to withhold it.

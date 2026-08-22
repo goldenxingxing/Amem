@@ -17,9 +17,9 @@ from pathlib import Path
 
 import pytest
 
-from amem import Store, execute, parse_operation
-from amem.candidates import MemoryCandidate
-from amem.operations import (
+from carryover import Store, execute, parse_operation
+from carryover.candidates import MemoryCandidate
+from carryover.operations import (
     OPERATION_NAMES,
     AddOp,
     AffirmOp,

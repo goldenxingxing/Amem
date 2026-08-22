@@ -47,8 +47,8 @@ PER_SAMPLE = int(os.environ.get("BENCH_PER_SAMPLE", "60"))
 
 
 def ours(turns, questions):
-    from amem.entry import MemoryEntry
-    from amem.search import MemorySearchIndex
+    from carryover.entry import MemoryEntry
+    from carryover.search import MemorySearchIndex
 
     entries = [MemoryEntry(kind="project", scope="persistent", content=t) for _, t in turns]
     text = {e.id: e.content for e in entries}
@@ -119,7 +119,7 @@ def mem0_hybrid(turns, questions, tag="final"):
 
 
 RETRIEVERS = {
-    "Amem (FTS5 + IDF scan)": ours,
+    "Carryover (FTS5 + IDF scan)": ours,
     "txtai (稠密+BM25 混合)": txtai_hybrid,
     "LlamaIndex BM25": llamaindex_bm25,
     "mem0 (qdrant 混合)": mem0_hybrid,
@@ -169,7 +169,7 @@ async def main() -> None:
     # by ours, so part of any gap is the model rather than the memory. Running
     # one retriever's notes through Cognee's model separates the two; without
     # it the comparison cannot say which was being measured.
-    control_key = "Amem (FTS5 + IDF scan)"
+    control_key = "Carryover (FTS5 + IDF scan)"
     if direct and control_key in retrieved:
         control = await score_all(
             {f"{control_key} — 换更强的模型作答（对照）": retrieved[control_key]}, alt=True

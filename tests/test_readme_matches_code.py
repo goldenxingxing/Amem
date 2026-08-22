@@ -18,13 +18,13 @@ from pathlib import Path
 
 import pytest
 
-from amem.consolidate import (
+from carryover.consolidate import (
     BEHAVIOURAL_BUDGET_CHARS,
     PRESSURE_ACT_AT,
     PRESSURE_WARN_AT,
 )
-from amem.entry import BEHAVIOURAL_KINDS, LOOKUP_KINDS
-from amem.inject import _INDEX_BUDGET_CHARS
+from carryover.entry import BEHAVIOURAL_KINDS, LOOKUP_KINDS
+from carryover.inject import _INDEX_BUDGET_CHARS
 
 _RAW = (Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
 
@@ -311,15 +311,15 @@ class TestTheUsageBlockRuns:
         return re.search(r"```python\n(.*?)```", section, re.S).group(1)
 
     def test_every_call_it_names_exists(self, tmp_path: Path) -> None:
-        import amem
+        import carryover
 
         block = self._integration_block(_RAW, "### The whole integration")
         # Against an instance, not the class: `directory` is set in __init__,
         # and a check that misses it would also miss a renamed attribute.
-        store = amem.Store(tmp_path)
+        store = carryover.Store(tmp_path)
 
-        for name in set(re.findall(r"amem\.(\w+)", block)):
-            assert hasattr(amem, name), f"README names amem.{name}"
+        for name in set(re.findall(r"carryover\.(\w+)", block)):
+            assert hasattr(carryover, name), f"README names carryover.{name}"
         for name in set(re.findall(r"store\.(\w+)", block)):
             assert hasattr(store, name), f"README names store.{name}"
 
@@ -340,8 +340,8 @@ class TestTheUsageBlockRuns:
 
         block = self._integration_block(_RAW, "### The whole integration")
         source = block.replace(
-            'store = amem.Store("~/.myagent/memory")',
-            f"store = amem.Store({str(tmp_path)!r})",
+            'store = carryover.Store("~/.myagent/memory")',
+            f"store = carryover.Store({str(tmp_path)!r})",
         ).replace(
             "async def ask_the_user(what: str) -> bool: ...",
             "async def ask_the_user(what: str) -> bool:\n    return True",
@@ -377,8 +377,8 @@ class TestTheUsageBlockRuns:
 
         block = self._integration_block(_RAW, "### The whole integration")
         source = block.replace(
-            'store = amem.Store("~/.myagent/memory")',
-            f"store = amem.Store({str(tmp_path)!r})",
+            'store = carryover.Store("~/.myagent/memory")',
+            f"store = carryover.Store({str(tmp_path)!r})",
         ).replace("async def ask_the_user(what: str) -> bool: ...", "")
         namespace: dict[str, object] = {}
         exec(compile(source, "README.md", "exec"), namespace)
@@ -400,7 +400,7 @@ def test_both_pages_show_the_same_integration() -> None:
     def calls(text: str, heading: str) -> set[str]:
         section = text[text.index(heading) :]
         block = re.search(r"```python\n(.*?)```", section, re.S).group(1)
-        return set(re.findall(r"(?:amem|store)\.\w+", block))
+        return set(re.findall(r"(?:carryover|store)\.\w+", block))
 
     assert calls(ZH, "### 完整接入") == calls(_RAW, "### The whole integration")
 

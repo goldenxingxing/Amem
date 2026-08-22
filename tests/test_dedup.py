@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from amem.dedup import (
+from carryover.dedup import (
     ADVISORY_RATIO,
     AUTO_MERGE_RATIO,
     classify_entry,
@@ -24,7 +24,7 @@ from amem.dedup import (
     numeric_tokens,
     similarity,
 )
-from amem.entry import MemoryEntry, MemoryKind
+from carryover.entry import MemoryEntry, MemoryKind
 
 
 def entry(content: str, *, kind: MemoryKind = "user", created_at: float = 1000.0) -> MemoryEntry:

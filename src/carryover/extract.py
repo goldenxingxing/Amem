@@ -1,6 +1,6 @@
 """Turning a finished conversation into candidate memories.
 
-The model is the caller's. Amem defines the prompt, the parsing and the rule
+The model is the caller's. Carryover defines the prompt, the parsing and the rule
 that nothing extracted is stored — it never imports an LLM client, and a caller
 supplies one function:
 
@@ -17,8 +17,8 @@ import re
 import time
 from typing import Protocol, cast
 
-from amem._log import logger
-from amem.candidates import MemoryCandidate
+from carryover._log import logger
+from carryover.candidates import MemoryCandidate
 
 
 class Completer(Protocol):
