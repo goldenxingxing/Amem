@@ -476,8 +476,10 @@ Python 3.11 or newer. One dependency, which pip will fetch:
 pip install git+https://github.com/goldenxingxing/Amem
 ```
 
-Not on PyPI yet — the name is reserved but nothing is published while the API
-can still move. Pin a commit if you depend on it.
+Not on PyPI yet: the name is reserved, but nothing is published while the API
+can still move. Pin a commit if you depend on it. What it is measured by, and
+the conclusions that were published and later retracted, are in
+`benchmarks/README.md`.
 
 ### The whole integration
 
@@ -656,10 +658,3 @@ for.
 | **Nothing is written without approval** | Extraction produces candidates. Candidates are proposals. |
 | **Nothing is destroyed** | Superseded entries are retired: out of the injected set, still in the file, still searchable, restorable. |
 | **The model is yours** | Amem never imports an LLM client. A test asserts it. |
-
-## Status
-
-Early. The core runs in production inside one application and is being
-extracted into this package. The benchmarks it is measured by live in
-`benchmarks/`, together with the conclusions that were published here and
-later retracted.

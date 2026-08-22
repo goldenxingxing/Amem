@@ -289,7 +289,7 @@ store.consolidate(合并后的文本, replacing=["reports/v1", "reports/v2"])
 pip install git+https://github.com/goldenxingxing/Amem
 ```
 
-还没发到 PyPI —— 名字占住了，但在 API 还可能变动期间不发包。要依赖它就锁一个 commit。
+还没发到 PyPI：名字占住了，但在 API 还可能变动期间不发包。要依赖它就锁一个 commit。它被什么衡量、以及那些发布过又撤回的结论，都在 `benchmarks/README.md`。
 
 ### 完整接入
 
@@ -429,7 +429,3 @@ python -m amem check ~/.myagent/memory
 | **没有批准就不写入** | 抽取产生的是候选。候选是提案。 |
 | **什么都不销毁** | 被取代的条目是**退役**:移出注入集合，仍在文件里，仍可检索，可以恢复。 |
 | **模型是你的** | Amem 从不 import 任何 LLM 客户端。有测试断言这一点。 |
-
-## 状态
-
-早期。核心部分在一个应用里已投入使用，正在被抽取成这个包。衡量它的 benchmark 在 `benchmarks/` 里 —— 包括它排在中游的那些对比，以及曾经发布在这里、后来被撤回的结论。
