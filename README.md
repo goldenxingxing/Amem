@@ -19,7 +19,7 @@ finds. That answers one kind of question well and leaves two unanswered.
 
 **Some memories are never asked for.** "Never put function names in the
 external docs" is obeyed by *not* doing something. Nobody types a query that
-retrieves it, and a system that only answers queries never surfaces it — so the
+retrieves it, and a system that only answers queries never surfaces it, so the
 rule sits correctly in the database while the agent breaks it. Measured over 243
 real turns from one user: **89% were instructions** ("fix this", "run the
 tests", "ship it"), where no retrieval happens and only memory that arrives
@@ -27,7 +27,7 @@ unasked can help. 8% asked for a single stored fact. 2.5% needed several
 combined.
 
 **Something has to decide what is kept.** Extraction can *notice* a fact; it
-must not be able to *write* one. Every other library here writes silently — you
+must not be able to *write* one. Every other library here writes silently. You
 find out what it recorded by going to look.
 
 Both answers are the design: memory is split by whether it must be present or
@@ -63,10 +63,10 @@ No competitor offers any of the three.
 
 ### Quality
 
-Recall@8 is deterministic — it asks whether the turn holding the answer came
-back — over 302 questions. End-to-end accuracy is LLM-judged over 120, reported
-as a mean with the spread across identical runs, because **the same system
-varies by up to ten points between them**.
+Recall@8 asks whether the turn holding the answer came back. It is
+deterministic, over 302 questions. End-to-end accuracy is LLM-judged over 120,
+reported as a mean with the spread across identical runs, because the same
+system varies by up to ten points between them.
 
 | System | Recall@8 EN | Recall@8 ZH | End-to-end | runs | spread |
 |---|---|---|---|---|---|
@@ -178,14 +178,14 @@ of your time.
 
 ### Two findings worth more than the ranking
 
-- **What predicts accuracy is whether an LLM runs at query time** — not what is
+- **What predicts accuracy is whether an LLM runs at query time.** Not what is
   stored, not how it is retrieved. The systems that run one lead; the seven that
-  do not sit between 43.0% and 54.5% and cannot be separated inside a ten-point
-  spread, and that group contains pure lexical, pure dense, hybrid and
-  LLM-extraction alike. **None of the marketing built around storage form shows
-  up in the scores.**
+  do not sit between 43.0% and 54.5%, close enough that a ten-point spread
+  covers all of them, and that group contains pure lexical, pure dense, hybrid
+  and LLM-extraction alike. None of the marketing built around storage form
+  shows up in the scores.
 - **BM25 scores 2.3% on Chinese** against 60.6% on English. That gap is why the
-  CJK handling exists — and most of it is a tokenizer rather than any one
+  CJK handling exists, and most of it is a tokenizer rather than any one
   implementation: a five-line bigram split ahead of a stock BM25 already reaches
   51.3%, with Amem 7.6 points above that.
 
@@ -224,8 +224,8 @@ the subject of a question, so they are injected unconditionally.
 
 The last two are **lookup**: most are irrelevant to any given conversation, and
 carrying all of them everywhere costs more than fetching the occasional right
-answer. They appear as a one-line summary — enough to know the fact was
-recorded — and are fetched in full when wanted.
+answer. They appear as a one-line summary, enough to know the fact was recorded,
+and are fetched in full when wanted.
 
 That is the whole architecture. Everything below exists to make each half work.
 
@@ -243,12 +243,12 @@ are worth writing down:
 
 - **The transcript is embedded in it, not appended to it.** With the
   conversation last, the model reads its own final turn as the live one and
-  continues it — answering the transcript, or emitting the tool call it was
-  about to make. Measured over six real sessions: **zero usable proposals**.
+  continues it: answering the transcript, or emitting the tool call it was about
+  to make. Measured over six real sessions, that produced zero usable proposals.
   Closing the transcript and stating the task after it gives four to five each.
 - **Facts carry their date.** "On 2026-05-06 the user moved rate estimation to
   an EWMA", not "rate estimation uses an EWMA". Entries have a `created_at`, but
-  that answers a different question — when it was *recorded*, not when it was
+  that answers a different question: when it was *recorded*, not when it was
   *true*.
 - **The common answer is "nothing".** The prompt says so and the model obeys: a
   debugging session produces almost nothing, small talk none, and raising the
@@ -273,10 +273,10 @@ fix a typo in an editor, and learn what your agent recorded by reading it. That
 is a design commitment rather than a storage detail: **a memory you cannot
 inspect is a memory you cannot correct.**
 
-`key` is a short semantic handle — `namespace/slug`, in any script — that a
-model can read, group by prefix and notice a typo in. `id` stays the primary
-key; `key` is what a model uses to refer to one. Anywhere a handle is accepted,
-a key, a full id, or an unambiguous id prefix all work.
+`key` is a short semantic handle, `namespace/slug` in any script, that a model
+can read, group by prefix and notice a typo in. `id` stays the primary key;
+`key` is what a model uses to refer to one. Anywhere a handle is accepted, a
+key, a full id, or an unambiguous id prefix all work.
 
 The search index is a **cache**: a SQLite database beside the store, rebuilt
 when the file changes. Deleting it costs one rebuild — which is what lets the
@@ -525,13 +525,13 @@ works; nothing here imports a client or reads an environment variable.
 `parse_operation` validates, `execute` performs. Twelve verbs, each mapping to
 a `Store` method, so a host that wires this function needs no schema of its own:
 
-- **`search`**, **`get`**, **`list`** — reading
-- **`add`** — a fact the user stated outright, so there is no approval to ask for
-- **`promote`**, **`dismiss`** — the queue: the only path from proposal to memory
-- **`update`**, **`delete`** — changing or removing one
-- **`retire`**, **`restore`** — out of the preamble without being lost
-- **`affirm`** — this one still holds, the answer that is not retirement
-- **`consolidate`** — replace several with one that keeps what all of them said
+- `search`, `get`, `list`: reading
+- `add`: a fact the user stated outright, so there is no approval to ask for
+- `promote`, `dismiss`: the queue, and the only path from proposal to memory
+- `update`, `delete`: changing or removing one
+- `retire`, `restore`: out of the preamble without being lost
+- `affirm`: this one still holds. The answer that is not retirement
+- `consolidate`: replace several with one that keeps what all of them said
 
 `op.writes` says whether performing it changes the store, so a host gating
 writes does not keep its own list — and cannot fall behind when this package
