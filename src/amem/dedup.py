@@ -341,8 +341,8 @@ def compact_entries(entries: Sequence[MemoryEntry]) -> tuple[list[MemoryEntry], 
 # Summary dedup asks a different question from entry dedup: not "is this the
 # same fact" but "does this record supersede that one". Similarity is the wrong
 # tool for it — too slow on 4000-character prose, and unable to separate two
-# summaries of one session from two summaries of unrelated sessions in the same
-# repository, which share just as much vocabulary.
+# summaries of one session from two summaries of unrelated sessions about the
+# same subject, which share just as much vocabulary.
 #
 # The duplication is structural instead, and exactly knowable. A session writes
 # one summary per compaction plus one at session end, and compaction summaries

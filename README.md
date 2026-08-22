@@ -2,13 +2,18 @@
 
 # Amem
 
-Cross-session memory for coding agents. Two text files and the standard
+Cross-session memory for agents. Two text files and the standard
 library.
 
-Amem keeps what an agent learns about a user and their projects, carries the
+Amem keeps what an agent learns about the person it works with, carries the
 standing parts into every later conversation without being asked, and lets the
 rest be searched. It is a library, not a service: no daemon, no vector
 database, no embedding model, nothing to install beyond Python.
+
+Nothing in it is specific to a domain. The examples below come from a coding
+assistant because that is where it was built, and the comparison further down
+was measured on LoCoMo — two people talking about their families and their
+weeks.
 
 ---
 
@@ -18,13 +23,13 @@ Most memory libraries are a vector store and a retrieval call: you ask, it
 finds. That answers one kind of question well and leaves two unanswered.
 
 **Some memories are never asked for.** "Never put function names in the
-external docs" is obeyed by *not* doing something. Nobody types a query that
-retrieves it, and a system that only answers queries never surfaces it, so the
-rule sits correctly in the database while the agent breaks it. Measured over 243
-real turns from one user: **89% were instructions** ("fix this", "run the
-tests", "ship it"), where no retrieval happens and only memory that arrives
-unasked can help. 8% asked for a single stored fact. 2.5% needed several
-combined.
+external docs", "always ask before emailing a client" — a rule like that is
+obeyed by *not* doing something. Nobody types a query that retrieves it, and a
+system that only answers queries never surfaces it, so the rule sits correctly
+in the database while the agent breaks it. Measured over 243 real turns from
+one user: **89% were instructions**, where no retrieval happens and only memory
+that arrives unasked can help. 8% asked for a single stored fact. 2.5% needed
+several combined.
 
 **Something has to decide what is kept.** Extraction can *notice* a fact; it
 must not be able to *write* one. Every other library here writes silently. You

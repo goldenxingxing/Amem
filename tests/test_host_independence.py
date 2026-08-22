@@ -495,3 +495,36 @@ class TestMoreThanOneWriter:
         for line in store.path.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 json.loads(line)
+
+
+class TestTheFramingIsNotNarrowerThanTheThing:
+    """It was described as memory "for coding agents" for its whole first week.
+
+    Nothing in it is specific to that: no module mentions code, repositories or
+    commits, the kinds are user/feedback/project/reference, and the comparison
+    everything rests on was measured on LoCoMo — two people talking about their
+    families. The framing came from the application it was extracted from, the
+    same way the tool names and the data model did, and it was the last piece
+    of that to go.
+    """
+
+    def test_no_module_assumes_a_domain(self) -> None:
+        domain = ("coding agent", "repository", "pull request", "codebase", "programmer")
+
+        for module in MODULES:
+            text = (SOURCE / f"{module}.py").read_text(encoding="utf-8").lower()
+            found = [w for w in domain if w.lower() in text]
+            assert not found, f"amem.{module} assumes {found}"
+
+    def test_the_package_description_is_not_narrowed(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        published = (root / "pyproject.toml").read_text(encoding="utf-8")
+
+        assert "coding agents" not in published
+
+    def test_the_page_says_the_examples_are_only_examples(self) -> None:
+        """The examples are from one domain, and a reader should not have to
+        infer that the library is too."""
+        readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
+
+        assert "Nothing in it is specific to a domain" in readme

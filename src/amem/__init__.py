@@ -1,4 +1,4 @@
-"""Amem — cross-session memory for coding agents.
+"""Amem — cross-session memory for agents.
 
 The shape of a working setup:
 

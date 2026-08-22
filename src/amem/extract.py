@@ -62,7 +62,7 @@ with this user.
 Include only what stays true after that conversation ends:
 - user — who they are, their role, how they work
 - feedback — a correction or standing instruction they gave you
-- project — a durable fact about a repository, system or decision
+- project — a durable fact about an ongoing piece of work, a system or a decision
 - reference — where something lives that you had to find
 
 Exclude anything tied to that conversation: what was done, what is in flight, \
